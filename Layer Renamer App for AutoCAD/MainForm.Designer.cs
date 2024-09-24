@@ -124,6 +124,7 @@
             this.linkLblHelp.TabStop = true;
             this.linkLblHelp.Text = "Help";
             this.linkLblHelp.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
+            this.linkLblHelp.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLblHelp_LinkClicked);
             // 
             // linkLblLicense
             // 
@@ -140,6 +141,7 @@
             this.linkLblLicense.TabStop = true;
             this.linkLblLicense.Text = "MIT License ©";
             this.linkLblLicense.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
+            this.linkLblLicense.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLblLicense_LinkClicked);
             // 
             // linkLblFootnote
             // 
@@ -156,6 +158,7 @@
             this.linkLblFootnote.TabStop = true;
             this.linkLblFootnote.Text = "Created by Oliver Wackenreuther, v1.0";
             this.linkLblFootnote.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
+            this.linkLblFootnote.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLblFootnote_LinkClicked);
             // 
             // LinkedIn
             // 
@@ -168,6 +171,7 @@
             this.LinkedIn.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.LinkedIn.TabIndex = 20;
             this.LinkedIn.TabStop = false;
+            this.LinkedIn.Click += new System.EventHandler(this.LinkedIn_Click);
             // 
             // GitHub
             // 
@@ -180,6 +184,7 @@
             this.GitHub.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.GitHub.TabIndex = 19;
             this.GitHub.TabStop = false;
+            this.GitHub.Click += new System.EventHandler(this.GitHub_Click);
             // 
             // Logo
             // 

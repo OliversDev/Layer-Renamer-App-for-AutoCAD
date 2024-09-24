@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.ApplicationServices;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace AutoCADLayerRenamer
 {
@@ -162,6 +163,58 @@ namespace AutoCADLayerRenamer
                     control.ForeColor = System.Drawing.Color.White;
                 }
             }
+        }
+
+        private void linkLblFootnote_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            string url = "https://ca.linkedin.com/in/oliverwackenreuther";
+            try
+            {
+                System.Diagnostics.Process.Start(url);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to open link. {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void linkLblLicense_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            string url = "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt";
+            try
+            {
+                System.Diagnostics.Process.Start(url);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to open link. {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+        }
+
+        private void linkLblHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            string url = "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/README.md";
+            try
+            {
+                System.Diagnostics.Process.Start(url);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to open link. {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void GitHub_Click(object sender, EventArgs e)
+        {
+            string url = "https://github.com/OliversDev";
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+
+        private void LinkedIn_Click(object sender, EventArgs e)
+        {
+            string url = "https://ca.linkedin.com/in/oliverwackenreuther";
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         }
     }
 }
