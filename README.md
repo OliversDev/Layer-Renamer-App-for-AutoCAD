@@ -63,11 +63,11 @@ The following characters are not allowed in layer names:
 <, >, /, \, ", :, ;, ?, *, |, ,, =
 
 ## License
-This project is licensed under the MIT License - see the LICENSE.txt file for details: https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt
-
+This project is licensed under the MIT License - see the [LICENSE.txt](https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt
+) file for details.
 ## Help and Support
 For bug reports or feature requests, feel free to open an issue on the GitHub Issues Page.
-You can also reach out to me on LinkedIn: Oliver Wackenreuther https://ca.linkedin.com/in/oliverwackenreuther
+You can also reach out to me on LinkedIn: [Oliver Wackenreuther](https://ca.linkedin.com/in/oliverwackenreuther)
 
 ## Contributing
 Contributions are welcome! If you'd like to contribute to this project, please fork the repository and submit a pull request with your proposed changes.
