@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Autodesk.AutoCAD.DatabaseServices;
+using DataTable = System.Data.DataTable;
 
 namespace AutoCADLayerRenamer
 {
