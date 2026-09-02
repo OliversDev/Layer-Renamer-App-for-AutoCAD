@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<MenuGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Name="LAYERRENAMER" DisplayName="Layer Renamer">
+  <MacroGroup Name="LAYERRENAMER_COMMANDS">
+    <MenuMacro UID="MM_LAYERRENAMER_OPEN">
+      <Macro type="Any">
+        <Revision MajorVersion="25" MinorVersion="1" UserVersion="0" />
+        <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />
+        <Name>Layer Renamer</Name>
+        <Command>^C^COW:LayerRenamer</Command>
+        <HelpString>Open Layer Renamer to preview and safely rename multiple drawing layers.</HelpString>
+        <SmallImage Name="LayerRenamer16.png" />
+        <LargeImage Name="LayerRenamer32.png" />
+        <CLICommand>OW:LayerRenamer</CLICommand>
+        <ToolTip />
+      </Macro>
+    </MenuMacro>
+  </MacroGroup>
+</MenuGroup>

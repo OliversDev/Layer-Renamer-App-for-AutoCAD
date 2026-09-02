@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Layer Renamer icon</title>
+  <path d="M462.1 359.5 Q512 330 561.9 359.5 L854.1 532.5 Q904 562 854.1 591.5 L561.9 764.5 Q512 794 462.1 764.5 L169.9 591.5 Q120 562 169.9 532.5 L462.1 359.5Z" fill="#737373"/>
+  <path d="M462.1 169.5 Q512 140 561.9 169.5 L854.1 342.5 Q904 372 854.1 401.5 L561.9 574.5 Q512 604 462.1 574.5 L169.9 401.5 Q120 372 169.9 342.5 L462.1 169.5Z" fill="#4ba9e6"/>
+  <text x="512" y="372" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="220" font-weight="700"
+        letter-spacing="-8" fill="#ffffff">LR</text>
+</svg>

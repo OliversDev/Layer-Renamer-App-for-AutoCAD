@@ -1,74 +1,76 @@
-# LAYER RENAMER APP for AutoCAD®
-## Overview
-The Layer Renamer App is a Windows Forms application built for AutoCAD that provides users with an easy-to-use interface for renaming multiple layers in a drawing. It allows you to apply prefixes and suffixes to selected layers and includes features like filtering layers, managing layer properties, and a dark theme for a modern user experience.
+# Layer Renamer for AutoCAD
+
+Layer Renamer is a focused AutoCAD add-in for safely renaming multiple drawing layers. It combines prefix, suffix, and optional find-and-replace rules with live previews and collision checks before any drawing change is committed.
 
 ## Features
-- Layer Filtering: Easily search for layers using the filter box to match layer names with a wildcard search.
-- Layer Renaming: Append custom prefixes and suffixes to selected layers.
-- Layer Management: Displays layer properties such as color, linetype, frozen status, lock status, and lineweight with sorting capability.
-- Persistent Layer Selection: The app maintains your selected layers even after filtering and clearing the filter.
-- AutoCAD Integration: Fully integrated with AutoCAD's document and layer management system.
-- Dark Theme: A visually appealing dark mode is applied across the application.
 
-## System Requirements
-- Operating System: Windows 7 or later
-- Autodesk AutoCAD 2013 or later
-- .NET Framework 4.7.2 or later
+- Rename multiple selected layers in one operation.
+- Add a prefix, suffix, or both.
+- Find and replace text with optional case-sensitive matching.
+- Preview every resulting name before renaming.
+- Filter layers by partial text or `*` wildcard patterns while preserving selection.
+- Prevent empty names, invalid characters, names longer than 255 characters, duplicate results, and collisions with existing layers.
+- Apply the complete rename as one AutoCAD transaction so a failure does not leave a partial result.
+- Exclude layer `0`, `Defpoints`, and externally dependent layers.
+- Display layer colour, linetype, frozen state, locked state, and lineweight.
+- Follow the Windows light or dark application theme.
+
+## Requirements
+
+- AutoCAD 2026 or AutoCAD 2027 for Windows, 64-bit
 
 ## Installation
-Download the latest release from the GitHub repository.
-Extract the zip file to a location of your choice.
-Run the LayerRenamerApp.exe file to launch the application.
 
-# Usage Guide
-1. Load Layers
-Once the app is opened, it automatically loads all layers from the active AutoCAD drawing. These layers are displayed in a grid, showing details such as:
-- Layer Name
-- Color
-- Linetype
-- Frozen/Locked Status
-- Lineweight
+The Autodesk Design and Make Marketplace installer registers the application automatically.
 
-2. Filter Layers
-- Use the Filter text box to search for layers based on name. The search is case-insensitive and supports partial matches.
-- Example: Typing "Wall" in the filter box will display all layers with "Wall" in their name.
+For local bundle testing, copy `LayerRenamer.bundle` to:
 
-3. Select Layers
-- Click on any row in the table to select the corresponding layer. You can select multiple layers by holding the Ctrl or Shift keys while clicking.
+```text
+C:\Program Files\Autodesk\ApplicationPlugins
+```
 
-4. Apply Prefix/Suffix
-- Enter a Prefix or Suffix in their respective text boxes.
-- Click Apply. The app will rename all selected layers with the provided prefix and suffix.
-- If no layers are selected, a warning will appear.
+Restart AutoCAD. Open the **Plug-Ins** ribbon tab and select **Layer Renamer**, or enter:
 
-5. Persistent Selection
-- The application saves your selected layers even after filtering or clearing the filter. This ensures that your selected layers remain intact during the entire renaming process.
+```text
+OW:LayerRenamer
+```
 
-6. Clear Filter
-- Click the Clear Filter button or erase the text in the filter box to reset the grid to show all layers.
+## Usage
 
-7. Layers "0" and "Defpoints"
-- These layers cannot and should not be renamed. Therefore, they are not included in the layer table by design. Layer table will be blank if you open a new drawing with no user defined layers and run the application.
+1. Select one or more layers in the grid.
+2. Enter a prefix and/or suffix.
+3. Enable **Find and Replace** when part of the existing name should change.
+4. Review the **New Name** preview column.
+5. Select **RENAME** and confirm the operation.
 
-9. Dark Theme
-- The app comes with a pre-configured dark theme that applies to all components, providing a sleek and modern look. The background is a dark gray while the text is displayed in white.
+The operation is undoable through AutoCAD's normal undo workflow. Maintain current backups and review the preview before renaming production drawings.
 
-## Error Handling
-The app provides detailed error messages if something goes wrong, such as:
-- Invalid characters in prefix/suffix.
-- Issues when renaming layers.
-- Problems loading layers from AutoCAD.
-</br>
-The following characters are not allowed in layer names:
-<, >, /, \, ", :, ;, ?, *, |, ,, =
+## Uninstallation
 
-## License
-This project is licensed under the MIT License - see the [LICENSE.txt](https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt
-) file for details.
-## Help and Support
-For bug reports or feature requests, feel free to open an issue on the GitHub Issues Page.
-You can also reach out to me on LinkedIn: [Oliver Wackenreuther](https://ca.linkedin.com/in/oliverwackenreuther)
+Use **Settings > Apps > Installed apps** in Windows, select **Layer Renamer**, and choose **Uninstall**. For a manually installed test bundle, close AutoCAD and remove `LayerRenamer.bundle` from the Autodesk `ApplicationPlugins` folder.
 
-## Contributing
-Contributions are welcome! If you'd like to contribute to this project, please fork the repository and submit a pull request with your proposed changes.
+## Privacy
 
+Layer Renamer does not collect or transmit personal information, drawing information, layer names, or usage analytics. Processing occurs locally. See [PRIVACY.md](PRIVACY.md).
+
+## Development and Marketplace packaging
+
+The solution builds AutoCAD 2026 with .NET 8 and AutoCAD 2027 with .NET 10. Install the corresponding .NET SDKs and AutoCAD managed APIs, then run from a PowerShell developer prompt:
+
+```powershell
+.\build-app-store.ps1
+```
+
+The script validates both AutoCAD API installations, builds release-specific DLLs, creates the partial CUIX ribbon, stages the complete bundle, copies Help/License/Privacy resources, and writes:
+
+```text
+AppStore\artifacts\LayerRenamer-2.0.0-Autodesk-Marketplace.zip
+```
+
+If AutoCAD is installed elsewhere, pass `-AutoCAD2026Dir` and `-AutoCAD2027Dir`. If the source was downloaded as a ZIP, unblock it in Windows before extracting or use `Unblock-File` on a trusted extracted copy.
+
+Marketplace artwork is maintained under `AppStore\Assets`, including exact 100, 120, and 1024 pixel transparent PNG files, a multi-resolution ICO, and editable SVG sources. The ribbon has separate 16 and 32 pixel assets.
+
+## License and third-party notices
+
+See [LICENSE.txt](LICENSE.txt) for the risk disclaimer and MIT terms. Licensed Dazzle icon sources under `Layer Renamer App for AutoCAD\dazzleicons` are intentionally ignored by Git; see [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Type="CUI" Target="/Header.cui" Id="R0000000000000001" />
+  <Relationship Type="CUI" Target="/MenuGroup.cui" Id="R0000000000000002" />
+  <Relationship Type="CUI" Target="/RibbonRoot.cui" Id="R0000000000000003" />
+  <Relationship Type="CUI" Target="/AcceleratorRoot.cui" Id="R0000000000000004" />
+  <Relationship Type="CUI" Target="/DigitizerButtonRoot.cui" Id="R0000000000000005" />
+  <Relationship Type="CUI" Target="/DoubleClickRoot.cui" Id="R0000000000000006" />
+  <Relationship Type="CUI" Target="/ImageMenuRoot.cui" Id="R0000000000000007" />
+  <Relationship Type="CUI" Target="/MouseButtonRoot.cui" Id="R0000000000000008" />
+  <Relationship Type="CUI" Target="/OverrideRoot.cui" Id="R0000000000000009" />
+  <Relationship Type="CUI" Target="/PopMenuRoot.cui" Id="R000000000000000a" />
+  <Relationship Type="CUI" Target="/QuickAccessToolbarRoot.cui" Id="R000000000000000b" />
+  <Relationship Type="CUI" Target="/QuickPropertiesRoot.cui" Id="R000000000000000c" />
+  <Relationship Type="CUI" Target="/RolloverTooltipRoot.cui" Id="R000000000000000d" />
+  <Relationship Type="CUI" Target="/ScreenMenuRoot.cui" Id="R000000000000000e" />
+  <Relationship Type="CUI" Target="/TabletMenuRoot.cui" Id="R000000000000000f" />
+  <Relationship Type="CUI" Target="/ToolbarRoot.cui" Id="R0000000000000010" />
+  <Relationship Type="CUI" Target="/WorkspaceRoot.cui" Id="R0000000000000011" />
+  <Relationship Type="Image" Target="/LayerRenamer16.png" Id="R0000000000000012" />
+  <Relationship Type="Image" Target="/LayerRenamer32.png" Id="R0000000000000013" />
+</Relationships>

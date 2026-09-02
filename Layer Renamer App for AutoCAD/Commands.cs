@@ -1,25 +1,16 @@
-﻿using System;
-using System.Linq;
-using System.Windows.Forms;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Windows;
 
 [assembly: CommandClass(typeof(AutoCADLayerRenamer.Commands))]
 
 namespace AutoCADLayerRenamer
 {
-    public class Commands
+    public sealed class Commands
     {
-        [CommandMethod("OW:LayerRenamer")]
-        public void LayerRenamer()
+        [CommandMethod("OW:LayerRenamer", CommandFlags.Modal)]
+        public void ShowLayerRenamer()
         {
             using (var form = new LayerRenameForm())
-            {
                 Autodesk.AutoCAD.ApplicationServices.Application.ShowModalDialog(form);
-            }
         }
     }
 }

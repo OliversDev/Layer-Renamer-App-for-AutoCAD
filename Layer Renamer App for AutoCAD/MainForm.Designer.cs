@@ -1,298 +1,141 @@
-﻿using System.Windows.Forms;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace AutoCADLayerRenamer
 {
     partial class LayerRenameForm
     {
-        private System.ComponentModel.IContainer components = null;
+        private System.ComponentModel.IContainer components;
+        private DataGridView dataGridViewLayers;
+        private TextBox txtFilter;
+        private TextBox txtPrefix;
+        private TextBox txtSuffix;
+        private TextBox txtFind;
+        private TextBox txtReplace;
+        private CheckBox chkFindReplace;
+        private CheckBox chkMatchCase;
+        private Label lblSelection;
+        private TableLayoutPanel footerPanel;
+        private PictureBox Logo;
+        private PictureBox GitHub;
+        private PictureBox LinkedIn;
+        private Button btnRename;
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
+            if (disposing && components != null) components.Dispose();
             base.Dispose(disposing);
         }
 
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            this.txtPrefix = new System.Windows.Forms.TextBox();
-            this.txtSuffix = new System.Windows.Forms.TextBox();
-            this.btnApply = new System.Windows.Forms.Button();
-            this.lblPrefix = new System.Windows.Forms.Label();
-            this.lblLayerList = new System.Windows.Forms.Label();
-            this.lblSuffix = new System.Windows.Forms.Label();
-            this.linkLblHelp = new System.Windows.Forms.LinkLabel();
-            this.linkLblLicense = new System.Windows.Forms.LinkLabel();
-            this.linkLblFootnote = new System.Windows.Forms.LinkLabel();
-            this.LinkedIn = new System.Windows.Forms.PictureBox();
-            this.GitHub = new System.Windows.Forms.PictureBox();
-            this.Logo = new System.Windows.Forms.PictureBox();
-            this.txtFilter = new System.Windows.Forms.TextBox();
-            this.lblSearch = new System.Windows.Forms.Label();
-            this.dataGridViewLayers = new System.Windows.Forms.DataGridView();
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
-            ((System.ComponentModel.ISupportInitialize)(this.LinkedIn)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.GitHub)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Logo)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewLayers)).BeginInit();
-            this.SuspendLayout();
-            // 
-            // txtPrefix
-            // 
-            this.txtPrefix.Location = new System.Drawing.Point(93, 34);
-            this.txtPrefix.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtPrefix.Name = "txtPrefix";
-            this.txtPrefix.Size = new System.Drawing.Size(200, 22);
-            this.txtPrefix.TabIndex = 1;
-            // 
-            // txtSuffix
-            // 
-            this.txtSuffix.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtSuffix.Location = new System.Drawing.Point(569, 34);
-            this.txtSuffix.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtSuffix.Name = "txtSuffix";
-            this.txtSuffix.Size = new System.Drawing.Size(200, 22);
-            this.txtSuffix.TabIndex = 2;
-            // 
-            // btnApply
-            // 
-            this.btnApply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnApply.Location = new System.Drawing.Point(669, 519);
-            this.btnApply.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.btnApply.Name = "btnApply";
-            this.btnApply.Size = new System.Drawing.Size(100, 28);
-            this.btnApply.TabIndex = 3;
-            this.btnApply.Text = "Apply";
-            this.btnApply.UseVisualStyleBackColor = true;
-            this.btnApply.Click += new System.EventHandler(this.btnApply_Click);
-            // 
-            // lblPrefix
-            // 
-            this.lblPrefix.AutoSize = true;
-            this.lblPrefix.Location = new System.Drawing.Point(13, 38);
-            this.lblPrefix.Name = "lblPrefix";
-            this.lblPrefix.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.lblPrefix.Size = new System.Drawing.Size(74, 16);
-            this.lblPrefix.TabIndex = 4;
-            this.lblPrefix.Text = "Enter Prefix";
-            // 
-            // lblLayerList
-            // 
-            this.lblLayerList.AutoSize = true;
-            this.lblLayerList.Location = new System.Drawing.Point(13, 70);
-            this.lblLayerList.Name = "lblLayerList";
-            this.lblLayerList.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.lblLayerList.Size = new System.Drawing.Size(134, 16);
-            this.lblLayerList.TabIndex = 5;
-            this.lblLayerList.Text = "Select from Layer List";
-            // 
-            // lblSuffix
-            // 
-            this.lblSuffix.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblSuffix.AutoSize = true;
-            this.lblSuffix.Location = new System.Drawing.Point(491, 38);
-            this.lblSuffix.Name = "lblSuffix";
-            this.lblSuffix.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.lblSuffix.Size = new System.Drawing.Size(72, 16);
-            this.lblSuffix.TabIndex = 6;
-            this.lblSuffix.Text = "Enter Suffix";
-            // 
-            // linkLblHelp
-            // 
-            this.linkLblHelp.ActiveLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(174)))), ((int)(((byte)(16)))));
-            this.linkLblHelp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.linkLblHelp.AutoSize = true;
-            this.linkLblHelp.LinkBehavior = System.Windows.Forms.LinkBehavior.AlwaysUnderline;
-            this.linkLblHelp.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
-            this.linkLblHelp.Location = new System.Drawing.Point(500, 532);
-            this.linkLblHelp.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.linkLblHelp.Name = "linkLblHelp";
-            this.linkLblHelp.Size = new System.Drawing.Size(36, 16);
-            this.linkLblHelp.TabIndex = 22;
-            this.linkLblHelp.TabStop = true;
-            this.linkLblHelp.Text = "Help";
-            this.linkLblHelp.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
-            this.linkLblHelp.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLblHelp_LinkClicked);
-            // 
-            // linkLblLicense
-            // 
-            this.linkLblLicense.ActiveLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(174)))), ((int)(((byte)(16)))));
-            this.linkLblLicense.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.linkLblLicense.AutoSize = true;
-            this.linkLblLicense.LinkBehavior = System.Windows.Forms.LinkBehavior.AlwaysUnderline;
-            this.linkLblLicense.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
-            this.linkLblLicense.Location = new System.Drawing.Point(401, 532);
-            this.linkLblLicense.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.linkLblLicense.Name = "linkLblLicense";
-            this.linkLblLicense.Size = new System.Drawing.Size(91, 16);
-            this.linkLblLicense.TabIndex = 21;
-            this.linkLblLicense.TabStop = true;
-            this.linkLblLicense.Text = "MIT License ©";
-            this.linkLblLicense.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
-            this.linkLblLicense.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLblLicense_LinkClicked);
-            // 
-            // linkLblFootnote
-            // 
-            this.linkLblFootnote.ActiveLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(174)))), ((int)(((byte)(16)))));
-            this.linkLblFootnote.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.linkLblFootnote.AutoSize = true;
-            this.linkLblFootnote.LinkBehavior = System.Windows.Forms.LinkBehavior.AlwaysUnderline;
-            this.linkLblFootnote.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
-            this.linkLblFootnote.Location = new System.Drawing.Point(157, 532);
-            this.linkLblFootnote.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.linkLblFootnote.Name = "linkLblFootnote";
-            this.linkLblFootnote.Size = new System.Drawing.Size(235, 16);
-            this.linkLblFootnote.TabIndex = 17;
-            this.linkLblFootnote.TabStop = true;
-            this.linkLblFootnote.Text = "Created by Oliver Wackenreuther, v1.0";
-            this.linkLblFootnote.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
-            this.linkLblFootnote.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLblFootnote_LinkClicked);
-            // 
-            // LinkedIn
-            // 
-            this.LinkedIn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.LinkedIn.Image = global::Layer_Renamer_App_for_AutoCAD.Properties.Resources.LI_In_Bug;
-            this.LinkedIn.Location = new System.Drawing.Point(115, 516);
-            this.LinkedIn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.LinkedIn.Name = "LinkedIn";
-            this.LinkedIn.Size = new System.Drawing.Size(35, 30);
-            this.LinkedIn.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.LinkedIn.TabIndex = 20;
-            this.LinkedIn.TabStop = false;
-            this.LinkedIn.Click += new System.EventHandler(this.LinkedIn_Click);
-            // 
-            // GitHub
-            // 
-            this.GitHub.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.GitHub.Image = global::Layer_Renamer_App_for_AutoCAD.Properties.Resources.github_mark_white;
-            this.GitHub.Location = new System.Drawing.Point(77, 516);
-            this.GitHub.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.GitHub.Name = "GitHub";
-            this.GitHub.Size = new System.Drawing.Size(29, 30);
-            this.GitHub.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.GitHub.TabIndex = 19;
-            this.GitHub.TabStop = false;
-            this.GitHub.Click += new System.EventHandler(this.GitHub_Click);
-            // 
-            // Logo
-            // 
-            this.Logo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.Logo.Image = global::Layer_Renamer_App_for_AutoCAD.Properties.Resources.Logo_BW_NOBG;
-            this.Logo.Location = new System.Drawing.Point(16, 516);
-            this.Logo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.Logo.Name = "Logo";
-            this.Logo.Size = new System.Drawing.Size(53, 30);
-            this.Logo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.Logo.TabIndex = 18;
-            this.Logo.TabStop = false;
-            // 
-            // txtFilter
-            // 
-            this.txtFilter.Location = new System.Drawing.Point(93, 5);
-            this.txtFilter.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtFilter.Name = "txtFilter";
-            this.txtFilter.Size = new System.Drawing.Size(200, 22);
-            this.txtFilter.TabIndex = 23;
-            this.txtFilter.TextChanged += new System.EventHandler(this.txtFilter_TextChanged);
-            // 
-            // lblSearch
-            // 
-            this.lblSearch.AutoSize = true;
-            this.lblSearch.Location = new System.Drawing.Point(13, 11);
-            this.lblSearch.Name = "lblSearch";
-            this.lblSearch.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.lblSearch.Size = new System.Drawing.Size(50, 16);
-            this.lblSearch.TabIndex = 24;
-            this.lblSearch.Text = "Search";
-            // 
-            // dataGridViewLayers
-            // 
-            this.dataGridViewLayers.AllowUserToAddRows = false;
-            this.dataGridViewLayers.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dataGridViewLayers.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridViewLayers.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
-            this.dataGridViewLayers.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewLayers.DefaultCellStyle = dataGridViewCellStyle2;
-            this.dataGridViewLayers.EnableHeadersVisualStyles = false;
-            this.dataGridViewLayers.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(212)))));
-            this.dataGridViewLayers.Location = new System.Drawing.Point(16, 89);
-            this.dataGridViewLayers.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.dataGridViewLayers.Name = "dataGridViewLayers";
-            this.dataGridViewLayers.ReadOnly = true;
-            this.dataGridViewLayers.RowHeadersVisible = false;
-            this.dataGridViewLayers.RowHeadersWidth = 51;
-            this.dataGridViewLayers.RowTemplate.Height = 24;
-            this.dataGridViewLayers.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridViewLayers.Size = new System.Drawing.Size(755, 420);
-            this.dataGridViewLayers.TabIndex = 25;
-            // 
-            // LayerRenameForm
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(784, 561);
-            this.Controls.Add(this.dataGridViewLayers);
-            this.Controls.Add(this.lblSearch);
-            this.Controls.Add(this.txtFilter);
-            this.Controls.Add(this.linkLblHelp);
-            this.Controls.Add(this.linkLblLicense);
-            this.Controls.Add(this.LinkedIn);
-            this.Controls.Add(this.GitHub);
-            this.Controls.Add(this.Logo);
-            this.Controls.Add(this.linkLblFootnote);
-            this.Controls.Add(this.lblSuffix);
-            this.Controls.Add(this.lblLayerList);
-            this.Controls.Add(this.lblPrefix);
-            this.Controls.Add(this.btnApply);
-            this.Controls.Add(this.txtSuffix);
-            this.Controls.Add(this.txtPrefix);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.MinimumSize = new System.Drawing.Size(799, 598);
-            this.Name = "LayerRenameForm";
-            this.Text = "Layer Renamer";
-            ((System.ComponentModel.ISupportInitialize)(this.LinkedIn)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.GitHub)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Logo)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewLayers)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            components = new System.ComponentModel.Container();
+            SuspendLayout();
 
+            var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(10), ColumnCount = 1, RowCount = 4 };
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            var search = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 4, Margin = new Padding(0, 0, 0, 10) };
+            search.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            search.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            search.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            search.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            search.Controls.Add(new Label { Text = "Filter", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 7, 10, 0) }, 0, 0);
+            txtFilter = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 3, 10, 3) };
+            txtFilter.TextChanged += txtFilter_TextChanged;
+            search.Controls.Add(txtFilter, 1, 0);
+            var clearFilter = new Button { Text = "Clear Filter", Width = 90, Margin = new Padding(0, 0, 10, 0) };
+            clearFilter.Click += btnClearFilter_Click;
+            search.Controls.Add(clearFilter, 2, 0);
+            lblSelection = new Label { Text = "0 selected", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 7, 0, 0) };
+            search.Controls.Add(lblSelection, 3, 0);
+
+            dataGridViewLayers = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                AutoGenerateColumns = true,
+                MultiSelect = true,
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                Margin = new Padding(0, 0, 0, 10),
+                ColumnHeadersHeight = 30,
+                RowTemplate = { Height = 26 }
+            };
+            dataGridViewLayers.SelectionChanged += dataGridViewLayers_SelectionChanged;
+
+            var options = new GroupBox { Text = "Rename Options", Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(10), Margin = new Padding(0, 0, 0, 10) };
+            var optionGrid = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 6, RowCount = 2 };
+            optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            optionGrid.Controls.Add(InputLabel("Prefix"), 0, 0);
+            txtPrefix = InputBox(); optionGrid.Controls.Add(txtPrefix, 1, 0);
+            optionGrid.Controls.Add(InputLabel("Suffix"), 2, 0);
+            txtSuffix = InputBox(); optionGrid.Controls.Add(txtSuffix, 3, 0);
+            chkFindReplace = new CheckBox { Text = "Find and Replace", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(10, 5, 10, 0) };
+            chkFindReplace.CheckedChanged += RenameOptionChanged;
+            optionGrid.Controls.Add(chkFindReplace, 4, 0);
+            chkMatchCase = new CheckBox { Text = "Match case", AutoSize = true, Enabled = false, Anchor = AnchorStyles.Left, Margin = new Padding(0, 5, 0, 0) };
+            chkMatchCase.CheckedChanged += RenameOptionChanged;
+            optionGrid.Controls.Add(chkMatchCase, 5, 0);
+            optionGrid.Controls.Add(InputLabel("Find"), 0, 1);
+            txtFind = InputBox(); txtFind.Enabled = false; optionGrid.Controls.Add(txtFind, 1, 1);
+            optionGrid.Controls.Add(InputLabel("Replace"), 2, 1);
+            txtReplace = InputBox(); txtReplace.Enabled = false; optionGrid.Controls.Add(txtReplace, 3, 1);
+            txtPrefix.TextChanged += RenameOptionChanged;
+            txtSuffix.TextChanged += RenameOptionChanged;
+            txtFind.TextChanged += RenameOptionChanged;
+            txtReplace.TextChanged += RenameOptionChanged;
+            options.Controls.Add(optionGrid);
+
+            footerPanel = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 10, Margin = new Padding(0) };
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            Logo = IconBox(Layer_Renamer_App_for_AutoCAD.Properties.Resources.Logo_BW_NOBG, 54); footerPanel.Controls.Add(Logo, 0, 0);
+            GitHub = IconBox(Layer_Renamer_App_for_AutoCAD.Properties.Resources.github_mark_white, 30); GitHub.Cursor = Cursors.Hand; GitHub.Click += GitHub_Click; footerPanel.Controls.Add(GitHub, 1, 0);
+            LinkedIn = IconBox(Layer_Renamer_App_for_AutoCAD.Properties.Resources.LI_In_Bug, 30); LinkedIn.Cursor = Cursors.Hand; LinkedIn.Click += LinkedIn_Click; footerPanel.Controls.Add(LinkedIn, 2, 0);
+            var author = FooterLink("Created by Oliver Wackenreuther, v2.0"); author.LinkClicked += linkLblFootnote_LinkClicked; footerPanel.Controls.Add(author, 3, 0);
+            var license = FooterLink("License"); license.LinkClicked += linkLblLicense_LinkClicked; footerPanel.Controls.Add(license, 4, 0);
+            var privacy = FooterLink("Privacy"); privacy.LinkClicked += linkLblPrivacy_LinkClicked; footerPanel.Controls.Add(privacy, 5, 0);
+            var help = FooterLink("Help"); help.LinkClicked += linkLblHelp_LinkClicked; footerPanel.Controls.Add(help, 7, 0);
+            btnRename = new Button { Text = "RENAME", Width = 100, Margin = new Padding(10, 0, 10, 0) }; btnRename.Click += btnRename_Click; footerPanel.Controls.Add(btnRename, 8, 0);
+            var close = new Button { Text = "Close", Width = 100, DialogResult = DialogResult.Cancel }; close.Click += btnClose_Click; footerPanel.Controls.Add(close, 9, 0);
+
+            root.Controls.Add(search, 0, 0);
+            root.Controls.Add(dataGridViewLayers, 0, 1);
+            root.Controls.Add(options, 0, 2);
+            root.Controls.Add(footerPanel, 0, 3);
+            Controls.Add(root);
+            AcceptButton = btnRename;
+            CancelButton = close;
+            ClientSize = new Size(980, 650);
+            MinimumSize = new Size(820, 560);
+            Name = "LayerRenameForm";
+            Text = "Layer Renamer";
+            ResumeLayout(false);
         }
-        private System.Windows.Forms.TextBox txtPrefix;
-        private System.Windows.Forms.TextBox txtSuffix;
-        private System.Windows.Forms.Button btnApply;
-        private System.Windows.Forms.Label lblPrefix;
-        private System.Windows.Forms.Label lblLayerList;
-        private System.Windows.Forms.Label lblSuffix;
-        private System.Windows.Forms.LinkLabel linkLblHelp;
-        private System.Windows.Forms.LinkLabel linkLblLicense;
-        private System.Windows.Forms.PictureBox LinkedIn;
-        private System.Windows.Forms.PictureBox GitHub;
-        private System.Windows.Forms.PictureBox Logo;
-        private System.Windows.Forms.LinkLabel linkLblFootnote;
-        private System.Windows.Forms.TextBox txtFilter;
-        private System.Windows.Forms.Label lblSearch;
-        private System.Windows.Forms.DataGridView dataGridViewLayers;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
+
+        private static Label InputLabel(string text) { return new Label { Text = text, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 7, 10, 0) }; }
+        private static TextBox InputBox() { return new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 3, 10, 3) }; }
+        private static PictureBox IconBox(Image image, int width) { return new PictureBox { Image = image, SizeMode = PictureBoxSizeMode.Zoom, Width = width, Height = 30, Margin = new Padding(0, 0, 8, 0) }; }
+        private static LinkLabel FooterLink(string text) { return new LinkLabel { Text = text, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 7, 10, 0) }; }
     }
 }

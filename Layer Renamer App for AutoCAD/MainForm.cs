@@ -1,372 +1,346 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.ApplicationServices;
-using static System.Net.Mime.MediaTypeNames;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
-using System.Data;
-using System.Collections.Generic;
-using Autodesk.AutoCAD.Colors;
 
 namespace AutoCADLayerRenamer
 {
     public partial class LayerRenameForm : Form
     {
-        // Constructor for initializing the form
+        private readonly DataTable layerTable = new DataTable();
+        private readonly HashSet<ObjectId> selectedLayerIds = new HashSet<ObjectId>();
+        private readonly Dictionary<string, ObjectId> existingLayers = new Dictionary<string, ObjectId>(StringComparer.OrdinalIgnoreCase);
+        private bool restoringSelection;
+
         public LayerRenameForm()
         {
-            InitializeComponent();  // Initialize form components
-            InitializeDataTable();  // Initialize the data table for layer data
-            LoadLayers();           // Load layers into the data table
-            ApplyDarkTheme();       // Apply dark theme to the form
+            InitializeComponent();
+            ApplyApplicationIcon();
+            InitializeLayerTable();
+            LayerRenamerTheme.Apply(this, btnRename, footerPanel, Logo, GitHub, LinkedIn);
+            ConfigureGrid();
+            LoadLayers();
+            UpdatePreview();
         }
 
-        // DataTable to store layer information
-        private System.Data.DataTable layerDataTable;
-
-        // Initialize the DataTable with necessary columns
-        private void InitializeDataTable()
+        private void ApplyApplicationIcon()
         {
-            layerDataTable = new System.Data.DataTable();
-
-            // Add columns for layer information
-            layerDataTable.Columns.Add("LayerName", typeof(string));     // Layer name
-            layerDataTable.Columns.Add("Color", typeof(string));         // Layer color
-            layerDataTable.Columns.Add("Linetype", typeof(string));      // Layer linetype
-            layerDataTable.Columns.Add("IsFrozen", typeof(bool));        // Layer frozen status
-            layerDataTable.Columns.Add("IsLocked", typeof(bool));        // Layer lock status
-            layerDataTable.Columns.Add("Lineweight", typeof(string));    // Layer lineweight
-
-            // Bind the DataTable to the DataGridView control
-            dataGridViewLayers.DataSource = layerDataTable;
-        }
-
-        // HashSet to store selected layers by their names
-        private HashSet<string> selectedLayers = new HashSet<string>();
-
-        // Event handler for text change in the filter textbox
-        private void txtFilter_TextChanged(object sender, EventArgs e)
-        {
-            SaveSelectedLayers();  // Save current layer selection before filtering
-
-            // If the filter textbox is empty, clear the filter
-            if (string.IsNullOrWhiteSpace(txtFilter.Text))
+            using (Stream stream = Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream("AutoCADLayerRenamer.LayerRenamerIcon.ico"))
             {
-                layerDataTable.DefaultView.RowFilter = string.Empty;  // Reset filter to show all layers
-            }
-            else
-            {
-                string filter = txtFilter.Text;  // Get the filter text
-                ApplyFilter(filter);            // Apply the filter to the DataTable
-            }
-
-            RestoreSelection();  // Restore the selection of layers after filtering
-        }
-
-        // Save the currently selected layers
-        private void SaveSelectedLayers()
-        {
-            // Iterate over all rows in the DataGridView
-            foreach (DataGridViewRow row in dataGridViewLayers.Rows)
-            {
-                string layerName = row.Cells["LayerName"].Value?.ToString();  // Get the layer name
-
-                // Check if the layer name is valid (non-empty)
-                if (!string.IsNullOrEmpty(layerName))
-                {
-                    // If the row is selected, add the layer to the selectedLayers HashSet
-                    if (row.Selected)
-                    {
-                        selectedLayers.Add(layerName);
-                    }
-                    // Otherwise, remove it from the selectedLayers HashSet
-                    else
-                    {
-                        selectedLayers.Remove(layerName);
-                    }
-                }
+                if (stream == null) return;
+                using (Icon source = new Icon(stream))
+                    Icon = (Icon)source.Clone();
             }
         }
 
-        // Apply the filter to the DataTable based on the entered filter text
-        private void ApplyFilter(string filter)
+        private void InitializeLayerTable()
         {
-            // Construct the row filter string using the entered filter text
-            string rowFilter = $"[LayerName] LIKE '%{filter.Replace("'", "''")}%'";  // Escape single quotes for SQL-like filtering
-
-            // Apply the filter to the DefaultView of the DataTable
-            layerDataTable.DefaultView.RowFilter = rowFilter;
+            layerTable.Columns.Add("LayerId", typeof(ObjectId));
+            layerTable.Columns.Add("LayerName", typeof(string));
+            layerTable.Columns.Add("NewName", typeof(string));
+            layerTable.Columns.Add("Color", typeof(string));
+            layerTable.Columns.Add("Linetype", typeof(string));
+            layerTable.Columns.Add("IsFrozen", typeof(bool));
+            layerTable.Columns.Add("IsLocked", typeof(bool));
+            layerTable.Columns.Add("Lineweight", typeof(string));
+            dataGridViewLayers.DataSource = layerTable;
         }
 
-        // Restore the previously saved layer selection after filtering
-        private void RestoreSelection()
+        private void ConfigureGrid()
         {
-            // Iterate over all rows in the DataGridView
-            foreach (DataGridViewRow row in dataGridViewLayers.Rows)
+            dataGridViewLayers.Columns["LayerId"].Visible = false;
+            dataGridViewLayers.Columns["LayerName"].HeaderText = "Layer";
+            dataGridViewLayers.Columns["NewName"].HeaderText = "New Name";
+            dataGridViewLayers.Columns["IsFrozen"].HeaderText = "Frozen";
+            dataGridViewLayers.Columns["IsLocked"].HeaderText = "Locked";
+            dataGridViewLayers.Columns["LayerName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewLayers.Columns["NewName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewLayers.Columns["Color"].Width = 90;
+            dataGridViewLayers.Columns["Linetype"].Width = 110;
+            dataGridViewLayers.Columns["IsFrozen"].Width = 64;
+            dataGridViewLayers.Columns["IsLocked"].Width = 64;
+            dataGridViewLayers.Columns["Lineweight"].Width = 105;
+            foreach (string name in new[] { "IsFrozen", "IsLocked" })
             {
-                string layerName = row.Cells["LayerName"].Value?.ToString();  // Get the layer name
-
-                // Check if the layer name is valid and if it is in the selectedLayers HashSet
-                if (!string.IsNullOrEmpty(layerName) && selectedLayers.Contains(layerName))
-                {
-                    row.Selected = true;  // Re-select the layer if it was previously selected
-                }
-                else
-                {
-                    row.Selected = false;  // Deselect the layer if it was not previously selected
-                }
+                var column = dataGridViewLayers.Columns[name];
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                column.DefaultCellStyle.ForeColor = SystemColors.GrayText;
             }
         }
 
-        // Clear the current filter and restore the selection of layers
-        private void ClearFilter()
-        {
-            txtFilter.Text = string.Empty;                      // Clear the filter textbox
-            layerDataTable.DefaultView.RowFilter = string.Empty;  // Reset the filter on the DataTable
-            RestoreSelection();                                 // Restore the selection of layers
-        }
-
-        // Load layers from the AutoCAD drawing into the DataTable
         private void LoadLayers()
         {
+            layerTable.Rows.Clear();
+            existingLayers.Clear();
+            var document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (document == null)
+            {
+                ShowMessageDialog("No active drawing is available.", "Layer Renamer", MessageBoxIcon.Warning);
+                return;
+            }
             try
             {
-                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-                var db = doc.Database;
-
-                // Start a new transaction
-                using (var tr = db.TransactionManager.StartTransaction())
+                using (var transaction = document.Database.TransactionManager.StartTransaction())
                 {
-                    var layerTable = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);  // Get the layer table
-                    layerDataTable.Rows.Clear();  // Clear existing rows in the DataTable
-
-                    // Loop through each layer in the layer table
-                    foreach (var layerId in layerTable)
+                    var layers = (LayerTable)transaction.GetObject(document.Database.LayerTableId, OpenMode.ForRead);
+                    foreach (ObjectId id in layers)
                     {
-                        var layer = (LayerTableRecord)tr.GetObject(layerId, OpenMode.ForRead);  // Get the layer record
-
-                        // Check if the layer has a valid name
-                        if (IsValidLayerName(layer.Name))
+                        var layer = (LayerTableRecord)transaction.GetObject(id, OpenMode.ForRead);
+                        existingLayers[layer.Name] = id;
+                        if (!IsRenameable(layer)) continue;
+                        string linetype = "ByLayer";
+                        if (!layer.LinetypeObjectId.IsNull && layer.LinetypeObjectId.IsValid)
                         {
-                            // Get layer properties and add them to the DataTable
-                            string layerName = layer.Name;               // Layer name
-                            string color = layer.Color.ToString();       // Layer color
-                            string linetypeName = layer.LinetypeObjectId.IsValid
-                                ? (tr.GetObject(layer.LinetypeObjectId, OpenMode.ForRead) as LinetypeTableRecord).Name
-                                : "ByLayer";                             // Linetype (or default to "ByLayer")
-                            string lineweight = layer.LineWeight.ToString();  // Layer lineweight
-                            layerDataTable.Rows.Add(layerName, color, linetypeName, layer.IsFrozen, layer.IsLocked, lineweight);
+                            var record = transaction.GetObject(layer.LinetypeObjectId, OpenMode.ForRead) as LinetypeTableRecord;
+                            if (record != null) linetype = record.Name;
                         }
+                        layerTable.Rows.Add(id, layer.Name, layer.Name, layer.Color.ToString(), linetype,
+                            layer.IsFrozen, layer.IsLocked, layer.LineWeight.ToString());
                     }
+                    transaction.Commit();
                 }
-
-                // Apply the filter if there's text in the filter textbox
-                if (!string.IsNullOrWhiteSpace(txtFilter.Text))
-                {
-                    ApplyFilter(txtFilter.Text);  // Apply filter to DataTable
-                }
+                ApplyFilter();
+                RestoreSelection();
             }
-            catch (Exception ex)  // Handle any errors during the layer loading process
+            catch (Exception ex)
             {
-                MessageBox.Show($"Error loading layers: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ShowMessageDialog("Layers could not be loaded.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxIcon.Error);
             }
         }
 
-        // Check if a layer name matches the specified filter using wildcard matching
-        private bool MatchesFilter(string layerName, string filter)
+        private static bool IsRenameable(LayerTableRecord layer)
         {
-            // Return true if the filter is empty (i.e., no filtering)
-            if (string.IsNullOrWhiteSpace(filter))
-            {
-                return true;
-            }
-
-            // Convert the filter to a regular expression pattern
-            string pattern = "^" + Regex.Escape(filter).Replace(@"\*", ".*") + "$";
-
-            // Perform case-insensitive matching of the layer name against the filter pattern
-            return Regex.IsMatch(layerName, pattern, RegexOptions.IgnoreCase);
+            return !layer.IsDependent &&
+                   !string.Equals(layer.Name, "0", StringComparison.OrdinalIgnoreCase) &&
+                   !string.Equals(layer.Name, "Defpoints", StringComparison.OrdinalIgnoreCase) &&
+                   layer.Name.IndexOf('|') < 0;
         }
 
-        // Check if a string contains any invalid characters
-        private bool ContainsInvalidCharacters(string input)
+        private void dataGridViewLayers_SelectionChanged(object sender, EventArgs e)
         {
-            // Define a list of characters that are not allowed in layer names
-            char[] invalidChars = { '<', '>', '/', '\\', '\"', ':', ';', '?', '*', '|', ',', '=' };
-
-            // Return true if the input contains any of these invalid characters
-            return input.Any(c => invalidChars.Contains(c));
+            if (restoringSelection) return;
+            foreach (DataGridViewRow row in dataGridViewLayers.Rows)
+            {
+                var id = (ObjectId)row.Cells["LayerId"].Value;
+                if (row.Selected) selectedLayerIds.Add(id); else selectedLayerIds.Remove(id);
+            }
+            UpdateSelectionLabel();
         }
 
-        // Check if a layer name is valid (does not contain reserved or invalid names)
-        private bool IsValidLayerName(string layerName)
+        private void txtFilter_TextChanged(object sender, EventArgs e)
         {
-            // Ensure the layer name is not "0" or "Defpoints" and does not contain a pipe character "|"
-            return layerName != "0" && layerName != "Defpoints" && !layerName.Contains("|");
+            restoringSelection = true;
+            try { ApplyFilter(); }
+            finally { restoringSelection = false; }
+            RestoreSelection();
         }
 
-        // Event handler for when the "Apply" button is clicked
-        private void btnApply_Click(object sender, EventArgs e)
+        private void ApplyFilter()
         {
-            // Get the prefix and suffix from the user input
-            var prefix = txtPrefix.Text;
-            var suffix = txtSuffix.Text;
+            string text = txtFilter.Text.Trim();
+            if (text.Length == 0) { layerTable.DefaultView.RowFilter = string.Empty; return; }
+            string pattern = text.IndexOf('*') >= 0 ? text : "*" + text + "*";
+            string escaped = pattern.Replace("'", "''").Replace("[", "[[]").Replace("%", "[%]").Replace("*", "%");
+            layerTable.DefaultView.RowFilter = "[LayerName] LIKE '" + escaped + "'";
+        }
 
-            // Check if the prefix or suffix contains invalid characters
-            if (ContainsInvalidCharacters(prefix) || ContainsInvalidCharacters(suffix))
-            {
-                MessageBox.Show("Prefix or suffix contains invalid characters. Please remove any of the following characters: <>/\\\":;?*|,=", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            // Check if any layers are selected
-            if (dataGridViewLayers.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("No layers selected. Please select at least one layer.", "No Layers Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
+        private void RestoreSelection()
+        {
+            restoringSelection = true;
             try
             {
-                // Save the currently selected layers before clearing the filter
-                SaveSelectedLayers();
+                dataGridViewLayers.ClearSelection();
+                foreach (DataGridViewRow row in dataGridViewLayers.Rows)
+                    if (selectedLayerIds.Contains((ObjectId)row.Cells["LayerId"].Value)) row.Selected = true;
+            }
+            finally { restoringSelection = false; }
+            UpdateSelectionLabel();
+        }
 
-                // Clear the filter and reset the selection
-                txtFilter.Text = string.Empty;
-                layerDataTable.DefaultView.RowFilter = string.Empty;
+        private void RenameOptionChanged(object sender, EventArgs e)
+        {
+            txtFind.Enabled = chkFindReplace.Checked;
+            txtReplace.Enabled = chkFindReplace.Checked;
+            chkMatchCase.Enabled = chkFindReplace.Checked;
+            UpdatePreview();
+        }
 
-                // Restore the selection after clearing the filter
-                RestoreSelection();
+        private void UpdatePreview()
+        {
+            foreach (DataRow row in layerTable.Rows) row["NewName"] = BuildNewName((string)row["LayerName"]);
+        }
 
-                // Rename the selected layers using the specified prefix and suffix
-                var renamedCount = LayerRenamer(prefix, suffix);
+        private string BuildNewName(string oldName)
+        {
+            string name = oldName;
+            if (chkFindReplace.Checked && txtFind.Text.Length > 0)
+            {
+                name = chkMatchCase.Checked
+                    ? name.Replace(txtFind.Text, txtReplace.Text)
+                    : Regex.Replace(name, Regex.Escape(txtFind.Text), match => txtReplace.Text, RegexOptions.IgnoreCase);
+            }
+            return txtPrefix.Text + name + txtSuffix.Text;
+        }
 
-                // Reload the layers to refresh the DataGridView with updated names
+        private void btnRename_Click(object sender, EventArgs e)
+        {
+            if (selectedLayerIds.Count == 0)
+            {
+                ShowMessageDialog("Select at least one layer to rename.", "Layer Renamer", MessageBoxIcon.Warning);
+                return;
+            }
+            if (chkFindReplace.Checked && txtFind.Text.Length == 0)
+            {
+                ShowMessageDialog("Enter text in Find, or turn off Find and Replace.", "Layer Renamer", MessageBoxIcon.Warning);
+                return;
+            }
+            var plan = BuildPlan();
+            string error;
+            if (!ValidatePlan(plan, out error))
+            {
+                ShowMessageDialog(error, "Layer Renamer", MessageBoxIcon.Warning);
+                return;
+            }
+            if (plan.Count == 0)
+            {
+                ShowMessageDialog("The selected options do not change any layer names.", "Layer Renamer", MessageBoxIcon.Information);
+                return;
+            }
+            if (!ShowConfirmationDialog("Rename " + plan.Count + " layer" + (plan.Count == 1 ? "" : "s") + "?", "Layer Renamer")) return;
+            try
+            {
+                ExecutePlan(plan);
+                selectedLayerIds.Clear();
                 LoadLayers();
-
-                // Restore the selection again after renaming
-                RestoreSelection();
-
-                // Display a success message with the number of renamed layers
-                MessageBox.Show($"{renamedCount} layers renamed successfully.", "Rename Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                UpdatePreview();
+                ShowMessageDialog(plan.Count + " layer" + (plan.Count == 1 ? " was" : "s were") + " renamed successfully.", "Layer Renamer", MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                // Display an error message if something goes wrong
-                MessageBox.Show($"Error renaming layers: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ShowMessageDialog("No changes were committed.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxIcon.Error);
             }
         }
 
-        // Method to rename layers with the given prefix and suffix
-        private int LayerRenamer(string prefix, string suffix)
+        private List<RenameItem> BuildPlan()
         {
-            // Get the currently active AutoCAD document
-            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            return layerTable.AsEnumerable()
+                .Where(row => selectedLayerIds.Contains(row.Field<ObjectId>("LayerId")))
+                .Select(row => new RenameItem(row.Field<ObjectId>("LayerId"), row.Field<string>("LayerName"), BuildNewName(row.Field<string>("LayerName"))))
+                .Where(item => !string.Equals(item.OldName, item.NewName, StringComparison.Ordinal))
+                .ToList();
+        }
 
-            // Get the database associated with the active document
-            var db = doc.Database;
-
-            // Initialize a counter to track how many layers have been renamed
-            int renamedCount = 0;
-
-            // Start a transaction to make changes to the AutoCAD database
-            using (var tr = db.TransactionManager.StartTransaction())
+        private bool ValidatePlan(IList<RenameItem> plan, out string error)
+        {
+            foreach (var item in plan)
             {
-                // Open the layer table for writing to allow modifications
-                var layerTable = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForWrite);
-
-                // Iterate through all selected rows in the DataGridView
-                foreach (DataGridViewRow selectedRow in dataGridViewLayers.SelectedRows)
+                if (string.IsNullOrWhiteSpace(item.NewName)) { error = "A layer name cannot be empty."; return false; }
+                if (item.NewName.Length > 255)
                 {
-                    // Retrieve the layer name from the selected row in the DataGridView
-                    var layerName = selectedRow.Cells["LayerName"].Value.ToString();
-
-                    // Get the layer table record for the corresponding layer name and open it for writing
-                    var layer = (LayerTableRecord)tr.GetObject(layerTable[layerName], OpenMode.ForWrite);
-
-                    // Rename the layer by concatenating the provided prefix and suffix to the existing layer name
-                    layer.Name = prefix + layer.Name + suffix;
-
-                    // Increment the counter for each layer that has been renamed
-                    renamedCount++;
+                    error = "The resulting name for \"" + item.OldName + "\" exceeds AutoCAD's 255-character layer-name limit.";
+                    return false;
                 }
-
-                // Commit the transaction to apply the changes to the AutoCAD database
-                tr.Commit();
-            }
-
-            // Return the total number of renamed layers
-            return renamedCount;
-        }
-
-
-        private void ApplyDarkTheme()
-        {
-            this.BackColor = System.Drawing.Color.FromArgb(24, 24, 24);
-            this.ForeColor = System.Drawing.Color.White;
-
-            foreach (Control control in this.Controls)
-            {
-                if (control is Button || control is TextBox || control is ListBox || control is DataGridView)
+                if (ContainsInvalidCharacters(item.NewName))
                 {
-                    control.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-                    control.ForeColor = System.Drawing.Color.White;
+                    error = "The resulting name for \"" + item.OldName + "\" contains an invalid character.\r\n\r\nInvalid characters: < > / \\ \" : ; ? * | , =";
+                    return false;
                 }
             }
+            var duplicate = plan.GroupBy(item => item.NewName, StringComparer.OrdinalIgnoreCase).FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+            {
+                error = "More than one selected layer would be renamed to \"" + duplicate.Key + "\". Change the rename options and try again.";
+                return false;
+            }
+            var selectedIds = new HashSet<ObjectId>(plan.Select(item => item.Id));
+            foreach (var existing in existingLayers)
+            {
+                if (!selectedIds.Contains(existing.Value) && plan.Any(item => string.Equals(item.NewName, existing.Key, StringComparison.OrdinalIgnoreCase)))
+                {
+                    error = "A layer named \"" + existing.Key + "\" already exists and is not part of this rename operation.";
+                    return false;
+                }
+            }
+            error = null;
+            return true;
         }
 
-        private void linkLblFootnote_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private static bool ContainsInvalidCharacters(string value)
         {
-            string url = "https://ca.linkedin.com/in/oliverwackenreuther";
-            try
+            return value.IndexOfAny(new[] { '<', '>', '/', '\\', '"', ':', ';', '?', '*', '|', ',', '=' }) >= 0 ||
+                   value.Any(char.IsControl);
+        }
+
+        private static void ExecutePlan(IList<RenameItem> plan)
+        {
+            var document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            using (document.LockDocument())
+            using (var transaction = document.Database.TransactionManager.StartTransaction())
             {
-                System.Diagnostics.Process.Start(url);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Unable to open link. {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                foreach (var item in plan)
+                {
+                    var layer = (LayerTableRecord)transaction.GetObject(item.Id, OpenMode.ForWrite);
+                    layer.Name = "__LAYER_RENAMER_" + item.Id.Handle + "_" + Guid.NewGuid().ToString("N");
+                }
+                foreach (var item in plan)
+                {
+                    var layer = (LayerTableRecord)transaction.GetObject(item.Id, OpenMode.ForWrite);
+                    layer.Name = item.NewName;
+                }
+                transaction.Commit();
             }
         }
 
-        private void linkLblLicense_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void btnClearFilter_Click(object sender, EventArgs e) { txtFilter.Clear(); }
+        private void btnClose_Click(object sender, EventArgs e) { Close(); }
+        private void UpdateSelectionLabel() { lblSelection.Text = selectedLayerIds.Count + " selected"; }
+        private void ShowMessageDialog(string message, string title, MessageBoxIcon icon)
         {
-            string url = "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt";
-            try
-            {
-                System.Diagnostics.Process.Start(url);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Unable to open link. {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
+            ThemedMessageBox.Show(this, message, title, MessageBoxButtons.OK, icon);
         }
-
-        private void linkLblHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private bool ShowConfirmationDialog(string message, string title)
         {
-            string url = "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/README.md";
-            try
-            {
-                System.Diagnostics.Process.Start(url);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Unable to open link. {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            return ThemedMessageBox.Show(this, message, title, MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes;
         }
-
-        private void GitHub_Click(object sender, EventArgs e)
+        private static void OpenUrl(string url)
         {
-            string url = "https://github.com/OliversDev";
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+            catch (Exception ex) { ThemedMessageBox.Show(null, "Unable to open the link.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
-
-        private void LinkedIn_Click(object sender, EventArgs e)
+        private static void OpenBundledDocument(string fileName, string fallbackUrl)
         {
-            string url = "https://ca.linkedin.com/in/oliverwackenreuther";
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            string assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string[] candidates =
+            {
+                Path.GetFullPath(Path.Combine(assemblyDirectory, "..", "Help", fileName)),
+                Path.Combine(assemblyDirectory, fileName)
+            };
+            string localFile = candidates.FirstOrDefault(File.Exists);
+            OpenUrl(localFile ?? fallbackUrl);
+        }
+        private void GitHub_Click(object sender, EventArgs e) { OpenUrl("https://github.com/OliversDev"); }
+        private void LinkedIn_Click(object sender, EventArgs e) { OpenUrl("https://ca.linkedin.com/in/oliverwackenreuther"); }
+        private void linkLblFootnote_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) { OpenUrl("https://ca.linkedin.com/in/oliverwackenreuther"); }
+        private void linkLblLicense_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) { OpenBundledDocument("LICENSE.txt", "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt"); }
+        private void linkLblPrivacy_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) { OpenBundledDocument("privacy.html", "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/PRIVACY.md"); }
+        private void linkLblHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) { OpenBundledDocument("index.html", "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD"); }
+
+        private sealed class RenameItem
+        {
+            public RenameItem(ObjectId id, string oldName, string newName) { Id = id; OldName = oldName; NewName = newName; }
+            public ObjectId Id { get; private set; }
+            public string OldName { get; private set; }
+            public string NewName { get; private set; }
         }
     }
 }

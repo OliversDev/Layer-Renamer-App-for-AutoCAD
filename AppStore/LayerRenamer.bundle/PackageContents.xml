@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0"
+                    AutodeskProduct="AutoCAD"
+                    ProductType="Application"
+                    Name="Layer Renamer"
+                    Description="Safely preview and rename multiple AutoCAD layers."
+                    AppVersion="2.0.0"
+                    FriendlyVersion="2.0.0"
+                    Author="Oliver Wackenreuther"
+                    AppNameSpace="com.oliversdev.layerrenamer"
+                    ProductCode="{3B2B8C51-A8E6-4A16-9B40-04A9919D1227}"
+                    UpgradeCode="{9F48A910-98FD-4DD0-AE8E-156A3B32F7CD}"
+                    Icon="./Contents/Resources/LayerRenamer.ico"
+                    Helpfile="./Contents/Help/index.html"
+                    OnlineDocumentation="https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD">
+  <CompanyDetails Name="Oliver Wackenreuther"
+                  Url="https://github.com/OliversDev" />
+
+  <Components Description="AutoCAD 2026">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R25.1" SeriesMax="R25.1" />
+    <ComponentEntry AppName="Layer Renamer Ribbon 2026"
+                    ModuleName="./Contents/Resources/LayerRenamer.cuix"
+                    AppDescription="Layer Renamer ribbon panel for AutoCAD 2026"
+                    LoadOnAutoCADStartup="True" />
+    <ComponentEntry AppName="Layer Renamer 2026"
+                    ModuleName="./Contents/2026/Layer Renamer App for AutoCAD.dll"
+                    AppDescription="Layer Renamer for AutoCAD 2026"
+                    LoadOnCommandInvocation="True">
+      <Commands GroupName="LayerRenamer">
+        <Command Global="OW:LayerRenamer" Local="OW:LayerRenamer" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+
+  <Components Description="AutoCAD 2027">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R26.0" SeriesMax="R26.0" />
+    <ComponentEntry AppName="Layer Renamer Ribbon 2027"
+                    ModuleName="./Contents/Resources/LayerRenamer.cuix"
+                    AppDescription="Layer Renamer ribbon panel for AutoCAD 2027"
+                    LoadOnAutoCADStartup="True" />
+    <ComponentEntry AppName="Layer Renamer 2027"
+                    ModuleName="./Contents/2027/Layer Renamer App for AutoCAD.dll"
+                    AppDescription="Layer Renamer for AutoCAD 2027"
+                    LoadOnCommandInvocation="True">
+      <Commands GroupName="LayerRenamer">
+        <Command Global="OW:LayerRenamer" Local="OW:LayerRenamer" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+</ApplicationPackage>

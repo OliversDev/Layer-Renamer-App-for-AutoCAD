@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<RibbonRoot>
+  <RibbonPanelSourceCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <RibbonPanelSource UID="RBN_PANEL_LAYERRENAMER" Text="Layer Renamer" HiddenInEditor="false">
+      <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />
+      <Name>Layer Renamer</Name>
+      <RibbonRow UID="RBN_ROW_LAYERRENAMER">
+        <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />
+        <RibbonCommandButton UID="RBN_BTN_LAYERRENAMER_OPEN"
+                             Id="AcRibbonCommandButton"
+                             Text="Layer\nRenamer"
+                             ButtonStyle="LargeWithText"
+                             MenuMacroID="MM_LAYERRENAMER_OPEN"
+                             KeyTip="">
+          <TooltipTitle>Layer Renamer</TooltipTitle>
+          <TooltipDescription>Safely preview and rename multiple AutoCAD layers.</TooltipDescription>
+          <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />
+        </RibbonCommandButton>
+      </RibbonRow>
+      <RibbonPanelBreak UID="RBN_BREAK_LAYERRENAMER" Id="AcRibbonPanelBreak">
+        <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />
+      </RibbonPanelBreak>
+    </RibbonPanelSource>
+  </RibbonPanelSourceCollection>
+  <RibbonTabSourceCollection>
+    <RibbonTabSource Text="Layer Renamer"
+                     UID="RBN_TAB_LAYERRENAMER"
+                     IsWorkspaceDefault="true"
+                     WorkspaceBehavior="MergeOrAddTab">
+      <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />
+      <Name>Layer Renamer</Name>
+      <Aliases>
+        <Alias>ID_ADDINSTAB</Alias>
+      </Aliases>
+      <RibbonPanelSourceReference UID="RBN_REF_LAYERRENAMER"
+                                  PanelId="RBN_PANEL_LAYERRENAMER"
+                                  ResizeStyle="Default">
+        <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />
+      </RibbonPanelSourceReference>
+    </RibbonTabSource>
+  </RibbonTabSourceCollection>
+</RibbonRoot>

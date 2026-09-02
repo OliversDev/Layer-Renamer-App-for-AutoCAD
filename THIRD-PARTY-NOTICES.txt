@@ -1,0 +1,13 @@
+Dazzle Pro Icons
+Copyright (c) Dazzle-UI, Inc. All Rights Reserved.
+License: Purchased Dazzle-UI Professional Solo License
+
+Layer Renamer uses licensed Dazzle Pro GitHub and LinkedIn icons as part of the
+Layer Renamer end product. The Dazzle assets are proprietary and may not be
+copied, extracted, reproduced, redistributed, sublicensed, resold, or reused
+outside the compiled application.
+
+https://dazzleui.pro/
+
+Autodesk and AutoCAD are registered trademarks of Autodesk, Inc. Layer Renamer
+is not affiliated with, endorsed by, sponsored by, or supported by Autodesk, Inc.

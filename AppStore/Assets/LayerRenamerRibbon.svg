@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <title>Layer Renamer ribbon icon</title>
+  <path d="M14.5 11.2 Q16 10.312 17.5 11.2 L26.7 16.6 Q28.25 17.562 26.7 18.5 L17.5 23.9 Q16 24.812 14.5 23.9 L5.3 18.5 Q3.75 17.562 5.3 16.6 L14.5 11.2Z" fill="#737373"/>
+  <path d="M14.5 5.3 Q16 4.375 17.5 5.3 L26.7 10.7 Q28.25 11.625 26.7 12.5 L17.5 18 Q16 18.875 14.5 18 L5.3 12.5 Q3.75 11.625 5.3 10.7 L14.5 5.3Z" fill="#4ba9e6"/>
+  <text x="16" y="11.625" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="7.1" font-weight="700"
+        letter-spacing="-0.3" fill="#ffffff">LR</text>
+</svg>
