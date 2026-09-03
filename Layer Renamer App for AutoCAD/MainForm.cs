@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -16,8 +17,13 @@ namespace AutoCADLayerRenamer
     public partial class LayerRenameForm : Form
     {
         private readonly DataTable layerTable = new DataTable();
-        private readonly HashSet<ObjectId> selectedLayerIds = new HashSet<ObjectId>();
-        private readonly Dictionary<string, ObjectId> existingLayers = new Dictionary<string, ObjectId>(StringComparer.OrdinalIgnoreCase);
+        private readonly List<LayerInfo> allLayers = new List<LayerInfo>();
+        private readonly HashSet<string> selectedLayerNames =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ObjectId> existingLayers =
+            new Dictionary<string, ObjectId>(StringComparer.OrdinalIgnoreCase);
+        private readonly List<RenameItem> stagedRenameItems = new List<RenameItem>();
+
         private bool restoringSelection;
         private bool generatedScriptIsRunnable;
 
@@ -29,7 +35,25 @@ namespace AutoCADLayerRenamer
             LayerRenamerTheme.Apply(this, btnRename, footerPanel, Logo, GitHub, LinkedIn);
             ConfigureGrid();
             LoadLayers();
-            UpdatePreview();
+            UpdateScriptDisplay();
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+
+            try
+            {
+                var document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (document != null)
+                    document.Window.Focus();
+                else
+                    Autodesk.AutoCAD.ApplicationServices.Application.MainWindow.Focus();
+            }
+            catch
+            {
+                // Focus recovery must never prevent the form from closing.
+            }
         }
 
         private void ApplyApplicationIcon()
@@ -70,9 +94,10 @@ namespace AutoCADLayerRenamer
             dataGridViewLayers.Columns["IsFrozen"].Width = 64;
             dataGridViewLayers.Columns["IsLocked"].Width = 64;
             dataGridViewLayers.Columns["Lineweight"].Width = 105;
+
             foreach (string name in new[] { "IsFrozen", "IsLocked" })
             {
-                var column = dataGridViewLayers.Columns[name];
+                DataGridViewColumn column = dataGridViewLayers.Columns[name];
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 column.DefaultCellStyle.ForeColor = SystemColors.GrayText;
@@ -81,47 +106,85 @@ namespace AutoCADLayerRenamer
 
         private void LoadLayers()
         {
-            layerTable.Rows.Clear();
+            SaveSelectedLayers();
+            allLayers.Clear();
             existingLayers.Clear();
+
             var document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
             if (document == null)
             {
                 ShowMessageDialog("No active drawing is available.", "Layer Renamer", MessageBoxIcon.Warning);
                 return;
             }
+
             try
             {
                 using (var transaction = document.Database.TransactionManager.StartTransaction())
                 {
-                    var layers = (LayerTable)transaction.GetObject(document.Database.LayerTableId, OpenMode.ForRead);
+                    var layers = (LayerTable)transaction.GetObject(
+                        document.Database.LayerTableId,
+                        OpenMode.ForRead);
+
                     foreach (ObjectId id in layers)
                     {
                         var layer = (LayerTableRecord)transaction.GetObject(id, OpenMode.ForRead);
                         existingLayers[layer.Name] = id;
+
                         if (!IsRenameable(layer)) continue;
+
                         string linetype = "ByLayer";
                         if (!layer.LinetypeObjectId.IsNull && layer.LinetypeObjectId.IsValid)
                         {
-                            var record = transaction.GetObject(layer.LinetypeObjectId, OpenMode.ForRead) as LinetypeTableRecord;
-                            if (record != null) linetype = record.Name;
+                            try
+                            {
+                                var record = transaction.GetObject(
+                                    layer.LinetypeObjectId,
+                                    OpenMode.ForRead) as LinetypeTableRecord;
+                                if (record != null) linetype = record.Name;
+                            }
+                            catch
+                            {
+                                // Keep the fallback linetype name.
+                            }
                         }
-                        layerTable.Rows.Add(id, layer.Name, layer.Name, layer.Color.ToString(), linetype,
-                            layer.IsFrozen, layer.IsLocked, layer.LineWeight.ToString());
+
+                        allLayers.Add(new LayerInfo(
+                            id,
+                            layer.Name,
+                            layer.Color.ToString(),
+                            linetype,
+                            layer.IsFrozen,
+                            layer.IsLocked,
+                            layer.LineWeight.ToString()));
                     }
+
                     transaction.Commit();
                 }
+
+                allLayers.Sort((left, right) =>
+                    StringComparer.OrdinalIgnoreCase.Compare(left.Name, right.Name));
+
+                var validNames = new HashSet<string>(
+                    allLayers.Select(layer => layer.Name),
+                    StringComparer.OrdinalIgnoreCase);
+                selectedLayerNames.RemoveWhere(name => !validNames.Contains(name));
+
                 ApplyFilter();
-                RestoreSelection();
             }
             catch (Exception ex)
             {
-                ShowMessageDialog("Layers could not be loaded.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxIcon.Error);
+                ShowMessageDialog(
+                    "Layers could not be loaded.\r\n\r\n" + ex.Message,
+                    "Layer Renamer",
+                    MessageBoxIcon.Error);
             }
         }
 
         private static bool IsRenameable(LayerTableRecord layer)
         {
-            return !layer.IsDependent &&
+            return layer != null &&
+                   !string.IsNullOrWhiteSpace(layer.Name) &&
+                   !layer.IsDependent &&
                    !string.Equals(layer.Name, "0", StringComparison.OrdinalIgnoreCase) &&
                    !string.Equals(layer.Name, "Defpoints", StringComparison.OrdinalIgnoreCase) &&
                    layer.Name.IndexOf('|') < 0;
@@ -130,149 +193,248 @@ namespace AutoCADLayerRenamer
         private void dataGridViewLayers_SelectionChanged(object sender, EventArgs e)
         {
             if (restoringSelection) return;
+            SaveSelectedLayers();
+            UpdateSelectionLabel();
+        }
+
+        private void SaveSelectedLayers()
+        {
+            if (dataGridViewLayers == null) return;
+
             foreach (DataGridViewRow row in dataGridViewLayers.Rows)
             {
-                var id = (ObjectId)row.Cells["LayerId"].Value;
-                if (row.Selected) selectedLayerIds.Add(id); else selectedLayerIds.Remove(id);
+                object rawName = row.Cells["LayerName"].Value;
+                if (rawName == null) continue;
+
+                string layerName = rawName.ToString();
+                if (row.Selected)
+                    selectedLayerNames.Add(layerName);
+                else
+                    selectedLayerNames.Remove(layerName);
             }
-            UpdateSelectionLabel();
         }
 
         private void txtFilter_TextChanged(object sender, EventArgs e)
         {
-            restoringSelection = true;
-            try { ApplyFilter(); }
-            finally { restoringSelection = false; }
-            RestoreSelection();
+            SaveSelectedLayers();
+            ApplyFilter();
         }
 
         private void ApplyFilter()
         {
-            string text = txtFilter.Text.Trim();
-            if (text.Length == 0) { layerTable.DefaultView.RowFilter = string.Empty; return; }
-            string pattern = text.IndexOf('*') >= 0 ? text : "*" + text + "*";
-            string escaped = pattern.Replace("'", "''").Replace("[", "[[]").Replace("%", "[%]").Replace("*", "%");
-            layerTable.DefaultView.RowFilter = "[LayerName] LIKE '" + escaped + "'";
-        }
+            string filter = txtFilter.Text.Trim();
+            IEnumerable<LayerInfo> filteredLayers =
+                allLayers.Where(layer => MatchesFilter(layer.Name, filter));
 
-        private void RestoreSelection()
-        {
             restoringSelection = true;
             try
             {
+                layerTable.Rows.Clear();
+
+                foreach (LayerInfo layer in filteredLayers)
+                {
+                    layerTable.Rows.Add(
+                        layer.Id,
+                        layer.Name,
+                        BuildNewName(layer.Name),
+                        layer.Color,
+                        layer.Linetype,
+                        layer.IsFrozen,
+                        layer.IsLocked,
+                        layer.Lineweight);
+                }
+
                 dataGridViewLayers.ClearSelection();
                 foreach (DataGridViewRow row in dataGridViewLayers.Rows)
-                    if (selectedLayerIds.Contains((ObjectId)row.Cells["LayerId"].Value)) row.Selected = true;
+                {
+                    object rawName = row.Cells["LayerName"].Value;
+                    if (rawName != null && selectedLayerNames.Contains(rawName.ToString()))
+                        row.Selected = true;
+                }
             }
-            finally { restoringSelection = false; }
+            finally
+            {
+                restoringSelection = false;
+            }
+
             UpdateSelectionLabel();
+        }
+
+        private static bool MatchesFilter(string layerName, string filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter)) return true;
+
+            bool containsWildcard = filter.IndexOf('*') >= 0 || filter.IndexOf('?') >= 0;
+            if (!containsWildcard)
+                return string.Equals(layerName, filter, StringComparison.OrdinalIgnoreCase);
+
+            string pattern = "^" + Regex.Escape(filter)
+                .Replace(@"\*", ".*")
+                .Replace(@"\?", ".") + "$";
+
+            return Regex.IsMatch(
+                layerName,
+                pattern,
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         }
 
         private void RenameOptionChanged(object sender, EventArgs e)
         {
-            txtFind.Enabled = chkFindReplace.Checked;
-            txtReplace.Enabled = chkFindReplace.Checked;
-            chkMatchCase.Enabled = chkFindReplace.Checked;
             UpdatePreview();
         }
 
         private void UpdatePreview()
         {
-            foreach (DataRow row in layerTable.Rows) row["NewName"] = BuildNewName((string)row["LayerName"]);
-            UpdateGeneratedScript();
+            foreach (DataRow row in layerTable.Rows)
+                row["NewName"] = BuildNewName((string)row["LayerName"]);
         }
 
         private string BuildNewName(string oldName)
         {
             string name = oldName;
-            if (chkFindReplace.Checked && txtFind.Text.Length > 0)
-            {
-                name = chkMatchCase.Checked
-                    ? name.Replace(txtFind.Text, txtReplace.Text)
-                    : Regex.Replace(name, Regex.Escape(txtFind.Text), match => txtReplace.Text, RegexOptions.IgnoreCase);
-            }
+            if (txtFind.Text.Length > 0)
+                name = ReplaceOrdinalIgnoreCase(name, txtFind.Text, txtReplace.Text);
+
             return txtPrefix.Text + name + txtSuffix.Text;
         }
 
-        private void btnRename_Click(object sender, EventArgs e)
+        private static string ReplaceOrdinalIgnoreCase(
+            string input,
+            string find,
+            string replacement)
         {
-            if (selectedLayerIds.Count == 0)
+            if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(find)) return input;
+
+            replacement = replacement ?? string.Empty;
+            int startIndex = 0;
+            var builder = new StringBuilder();
+
+            while (true)
             {
-                ShowMessageDialog("Select at least one layer to rename.", "Layer Renamer", MessageBoxIcon.Warning);
+                int index = input.IndexOf(find, startIndex, StringComparison.OrdinalIgnoreCase);
+                if (index < 0)
+                {
+                    builder.Append(input.Substring(startIndex));
+                    break;
+                }
+
+                builder.Append(input.Substring(startIndex, index - startIndex));
+                builder.Append(replacement);
+                startIndex = index + find.Length;
+            }
+
+            return builder.ToString();
+        }
+
+        private List<RenameItem> BuildCurrentSelectionPlan()
+        {
+            return allLayers
+                .Where(layer => selectedLayerNames.Contains(layer.Name))
+                .Select(layer => new RenameItem(layer.Id, layer.Name, BuildNewName(layer.Name)))
+                .Where(item => !string.Equals(item.OldName, item.NewName, StringComparison.Ordinal))
+                .OrderBy(item => item.OldName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private void btnAddToScriptList_Click(object sender, EventArgs e)
+        {
+            SaveSelectedLayers();
+
+            if (selectedLayerNames.Count == 0)
+            {
+                ShowMessageDialog(
+                    "Select one or more layers before adding rename commands.",
+                    "Layer Renamer",
+                    MessageBoxIcon.Information);
                 return;
             }
-            if (chkFindReplace.Checked && txtFind.Text.Length == 0)
+
+            List<RenameItem> selectionPlan = BuildCurrentSelectionPlan();
+            if (selectionPlan.Count == 0)
             {
-                ShowMessageDialog("Enter text in Find, or turn off Find and Replace.", "Layer Renamer", MessageBoxIcon.Warning);
+                ShowMessageDialog(
+                    "The selected options do not change any layer names.",
+                    "Layer Renamer",
+                    MessageBoxIcon.Information);
                 return;
             }
-            var plan = BuildPlan();
+
+            var candidate = stagedRenameItems.ToDictionary(item => item.Id);
+            foreach (RenameItem item in selectionPlan)
+                candidate[item.Id] = item;
+
+            List<RenameItem> combinedPlan = candidate.Values
+                .OrderBy(item => item.OldName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
             string error;
-            if (!ValidatePlan(plan, out error))
+            if (!ValidatePlan(combinedPlan, out error))
             {
                 ShowMessageDialog(error, "Layer Renamer", MessageBoxIcon.Warning);
                 return;
             }
-            if (plan.Count == 0)
-            {
-                ShowMessageDialog("The selected options do not change any layer names.", "Layer Renamer", MessageBoxIcon.Information);
-                return;
-            }
-            if (!ShowConfirmationDialog("Rename " + plan.Count + " layer" + (plan.Count == 1 ? "" : "s") + "?", "Layer Renamer")) return;
-            try
-            {
-                ExecutePlan(plan);
-                selectedLayerIds.Clear();
-                LoadLayers();
-                UpdatePreview();
-                ShowMessageDialog(plan.Count + " layer" + (plan.Count == 1 ? " was" : "s were") + " renamed successfully.", "Layer Renamer", MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                ShowMessageDialog("No changes were committed.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxIcon.Error);
-            }
-        }
 
-        private List<RenameItem> BuildPlan()
-        {
-            return layerTable.AsEnumerable()
-                .Where(row => selectedLayerIds.Contains(row.Field<ObjectId>("LayerId")))
-                .Select(row => new RenameItem(row.Field<ObjectId>("LayerId"), row.Field<string>("LayerName"), BuildNewName(row.Field<string>("LayerName"))))
-                .Where(item => !string.Equals(item.OldName, item.NewName, StringComparison.Ordinal))
-                .ToList();
+            stagedRenameItems.Clear();
+            stagedRenameItems.AddRange(combinedPlan);
+            UpdateScriptDisplay();
         }
 
         private bool ValidatePlan(IList<RenameItem> plan, out string error)
         {
-            foreach (var item in plan)
+            foreach (RenameItem item in plan)
             {
-                if (string.IsNullOrWhiteSpace(item.NewName)) { error = "A layer name cannot be empty."; return false; }
+                ObjectId currentId;
+                if (!existingLayers.TryGetValue(item.OldName, out currentId) || currentId != item.Id)
+                {
+                    error = "Layer \"" + item.OldName + "\" is no longer available. Refresh the layer list and rebuild the script.";
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(item.NewName))
+                {
+                    error = "A layer name cannot be empty.";
+                    return false;
+                }
+
                 if (item.NewName.Length > 255)
                 {
                     error = "The resulting name for \"" + item.OldName + "\" exceeds AutoCAD's 255-character layer-name limit.";
                     return false;
                 }
+
                 if (ContainsInvalidCharacters(item.NewName))
                 {
-                    error = "The resulting name for \"" + item.OldName + "\" contains an invalid character.\r\n\r\nInvalid characters: < > / \\ \" : ; ? * | , =";
+                    error = "The resulting name for \"" + item.OldName + "\" contains an invalid character.\r\n\r\n" +
+                            "Invalid characters: < > / \\ \" : ; ? * | , =";
                     return false;
                 }
             }
-            var duplicate = plan.GroupBy(item => item.NewName, StringComparer.OrdinalIgnoreCase).FirstOrDefault(group => group.Count() > 1);
+
+            IGrouping<string, RenameItem> duplicate = plan
+                .GroupBy(item => item.NewName, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
             {
-                error = "More than one selected layer would be renamed to \"" + duplicate.Key + "\". Change the rename options and try again.";
+                error = "More than one staged layer would be renamed to \"" + duplicate.Key +
+                        "\". Change the rename options and add the selection again.";
                 return false;
             }
-            var selectedIds = new HashSet<ObjectId>(plan.Select(item => item.Id));
-            foreach (var existing in existingLayers)
+
+            var stagedIds = new HashSet<ObjectId>(plan.Select(item => item.Id));
+            foreach (KeyValuePair<string, ObjectId> existing in existingLayers)
             {
-                if (!selectedIds.Contains(existing.Value) && plan.Any(item => string.Equals(item.NewName, existing.Key, StringComparison.OrdinalIgnoreCase)))
+                if (!stagedIds.Contains(existing.Value) &&
+                    plan.Any(item => string.Equals(
+                        item.NewName,
+                        existing.Key,
+                        StringComparison.OrdinalIgnoreCase)))
                 {
-                    error = "A layer named \"" + existing.Key + "\" already exists and is not part of this rename operation.";
+                    error = "A layer named \"" + existing.Key +
+                            "\" already exists and is not included in the staged rename operation.";
                     return false;
                 }
             }
+
             error = null;
             return true;
         }
@@ -283,62 +445,21 @@ namespace AutoCADLayerRenamer
                    value.Any(char.IsControl);
         }
 
-        private static void ExecutePlan(IList<RenameItem> plan)
+        private void UpdateScriptDisplay()
         {
-            var document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-            using (document.LockDocument())
-            using (var transaction = document.Database.TransactionManager.StartTransaction())
-            {
-                foreach (var item in plan)
-                {
-                    var layer = (LayerTableRecord)transaction.GetObject(item.Id, OpenMode.ForWrite);
-                    layer.Name = "__LAYER_RENAMER_" + item.Id.Handle + "_" + Guid.NewGuid().ToString("N");
-                }
-                foreach (var item in plan)
-                {
-                    var layer = (LayerTableRecord)transaction.GetObject(item.Id, OpenMode.ForWrite);
-                    layer.Name = item.NewName;
-                }
-                transaction.Commit();
-            }
-        }
+            generatedScriptIsRunnable = stagedRenameItems.Count > 0;
+            txtGeneratedScript.Text = generatedScriptIsRunnable
+                ? BuildGeneratedScript(stagedRenameItems)
+                : "; Select layers, set the rename options, and click Add To Script List.";
 
-        private void UpdateGeneratedScript()
-        {
-            if (txtGeneratedScript == null) return;
+            grpScript.Text = generatedScriptIsRunnable
+                ? "Script (" + stagedRenameItems.Count + " staged)"
+                : "Script";
 
-            if (selectedLayerIds.Count == 0)
-            {
-                SetGeneratedScriptMessage("Select one or more layers to generate a script.");
-                return;
-            }
-
-            List<RenameItem> plan = BuildPlan();
-            if (plan.Count == 0)
-            {
-                SetGeneratedScriptMessage("The selected options do not change any layer names.");
-                return;
-            }
-
-            string error;
-            if (!ValidatePlan(plan, out error))
-            {
-                SetGeneratedScriptMessage("Script cannot be generated: " + NormalizeScriptMessage(error));
-                return;
-            }
-
-            txtGeneratedScript.Text = BuildGeneratedScript(plan);
-            generatedScriptIsRunnable = true;
-            btnCopyScript.Enabled = true;
-            btnSaveScript.Enabled = true;
-        }
-
-        private void SetGeneratedScriptMessage(string message)
-        {
-            generatedScriptIsRunnable = false;
-            txtGeneratedScript.Text = "; " + message;
-            btnCopyScript.Enabled = false;
-            btnSaveScript.Enabled = false;
+            btnCopyScript.Enabled = generatedScriptIsRunnable;
+            btnSaveScript.Enabled = generatedScriptIsRunnable;
+            btnClearScript.Enabled = generatedScriptIsRunnable;
+            btnRename.Enabled = generatedScriptIsRunnable;
         }
 
         private string BuildGeneratedScript(IList<RenameItem> plan)
@@ -357,27 +478,16 @@ namespace AutoCADLayerRenamer
                 temporaryNames[item.Id] = temporaryName;
             }
 
-            var lines = new List<string>
-            {
-                "; Layer Renamer generated script",
-                "; Generated for the currently selected layers.",
-                "; The temporary-name pass allows swaps and chained renames.",
-                string.Empty
-            };
-
+            var lines = new List<string>();
             foreach (RenameItem item in plan)
-            {
                 lines.Add(BuildRenameScriptCommand(item.OldName, temporaryNames[item.Id]));
-            }
 
             lines.Add(string.Empty);
 
             foreach (RenameItem item in plan)
-            {
                 lines.Add(BuildRenameScriptCommand(temporaryNames[item.Id], item.NewName));
-            }
 
-            return string.Join(Environment.NewLine, lines) + Environment.NewLine;
+            return NormalizeScriptText(string.Join(Environment.NewLine, lines), true);
         }
 
         private static string BuildRenameScriptCommand(string oldName, string newName)
@@ -388,12 +498,79 @@ namespace AutoCADLayerRenamer
 
         private static string EscapeAutoLispString(string value)
         {
-            return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            return (value ?? string.Empty)
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"");
         }
 
-        private static string NormalizeScriptMessage(string value)
+        private static string NormalizeScriptText(string script, bool addFinalNewLine)
         {
-            return value.Replace("\r", " ").Replace("\n", " ");
+            if (string.IsNullOrWhiteSpace(script)) return string.Empty;
+
+            string normalized = string.Join(
+                Environment.NewLine,
+                script
+                    .Replace("\r\n", "\n")
+                    .Replace("\r", "\n")
+                    .Split(new[] { '\n' }, StringSplitOptions.None)
+                    .Select(line => line.TrimEnd()));
+
+            return addFinalNewLine ? normalized.TrimEnd() + Environment.NewLine : normalized.TrimEnd();
+        }
+
+        private void btnRename_Click(object sender, EventArgs e)
+        {
+            if (!generatedScriptIsRunnable)
+            {
+                ShowMessageDialog(
+                    "Add one or more layer rename operations to the script first.",
+                    "Layer Renamer",
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            string error;
+            if (!ValidatePlan(stagedRenameItems, out error))
+            {
+                ShowMessageDialog(error, "Layer Renamer", MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!ShowConfirmationDialog(
+                "Run " + stagedRenameItems.Count + " staged layer rename" +
+                (stagedRenameItems.Count == 1 ? "?" : "s?"),
+                "Layer Renamer"))
+            {
+                return;
+            }
+
+            try
+            {
+                var document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (document == null)
+                    throw new InvalidOperationException("No active AutoCAD drawing is available.");
+
+                string[] commands = txtGeneratedScript.Lines
+                    .Select(line => line.Trim())
+                    .Where(line => !string.IsNullOrWhiteSpace(line))
+                    .ToArray();
+
+                Hide();
+                document.Window.Focus();
+
+                foreach (string command in commands)
+                    document.SendStringToExecute(command + "\n", true, false, false);
+
+                BeginInvoke(new Action(Close));
+            }
+            catch (Exception ex)
+            {
+                Show();
+                ShowMessageDialog(
+                    "The rename script could not be started.\r\n\r\n" + ex.Message,
+                    "Layer Renamer",
+                    MessageBoxIcon.Error);
+            }
         }
 
         private void btnCopyScript_Click(object sender, EventArgs e)
@@ -403,11 +580,17 @@ namespace AutoCADLayerRenamer
             try
             {
                 Clipboard.SetText(txtGeneratedScript.Text);
-                ShowMessageDialog("The generated script was copied to the clipboard.", "Layer Renamer", MessageBoxIcon.Information);
+                ShowMessageDialog(
+                    "The staged script was copied to the clipboard.",
+                    "Layer Renamer",
+                    MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                ShowMessageDialog("The script could not be copied.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxIcon.Error);
+                ShowMessageDialog(
+                    "The script could not be copied.\r\n\r\n" + ex.Message,
+                    "Layer Renamer",
+                    MessageBoxIcon.Error);
             }
         }
 
@@ -421,46 +604,94 @@ namespace AutoCADLayerRenamer
                 {
                     AddExtension = true,
                     DefaultExt = "scr",
-                    FileName = "LayerRenamer-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".scr",
-                    Filter = "AutoCAD scripts (*.scr)|*.scr|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                    FileName = "LayerRename.scr",
+                    Filter = "AutoCAD scripts (*.scr)|*.scr",
                     OverwritePrompt = true,
                     RestoreDirectory = true,
-                    Title = "Save Generated Layer Rename Script"
+                    Title = "Save Layer Rename Script"
                 })
                 {
                     if (dialog.ShowDialog(this) != DialogResult.OK) return;
-                    File.WriteAllText(dialog.FileName, txtGeneratedScript.Text);
+                    File.WriteAllText(
+                        dialog.FileName,
+                        NormalizeScriptText(txtGeneratedScript.Text, true),
+                        Encoding.ASCII);
                 }
 
-                ShowMessageDialog("The generated script was saved successfully.", "Layer Renamer", MessageBoxIcon.Information);
+                ShowMessageDialog(
+                    "The staged script was saved successfully.",
+                    "Layer Renamer",
+                    MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                ShowMessageDialog("The script could not be saved.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxIcon.Error);
+                ShowMessageDialog(
+                    "The script could not be saved.\r\n\r\n" + ex.Message,
+                    "Layer Renamer",
+                    MessageBoxIcon.Error);
             }
         }
 
-        private void btnClearFilter_Click(object sender, EventArgs e) { txtFilter.Clear(); }
-        private void btnClose_Click(object sender, EventArgs e) { Close(); }
+        private void btnClearScript_Click(object sender, EventArgs e)
+        {
+            stagedRenameItems.Clear();
+            UpdateScriptDisplay();
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            LoadLayers();
+            UpdatePreview();
+        }
+
+        private void btnClearFilter_Click(object sender, EventArgs e)
+        {
+            txtFilter.Clear();
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
         private void UpdateSelectionLabel()
         {
-            lblSelection.Text = selectedLayerIds.Count + " selected";
-            UpdateGeneratedScript();
+            lblSelection.Text = selectedLayerNames.Count + " selected";
         }
+
         private void ShowMessageDialog(string message, string title, MessageBoxIcon icon)
         {
             ThemedMessageBox.Show(this, message, title, MessageBoxButtons.OK, icon);
         }
+
         private bool ShowConfirmationDialog(string message, string title)
         {
-            return ThemedMessageBox.Show(this, message, title, MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+            return ThemedMessageBox.Show(
+                this,
+                message,
+                title,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question,
+                MessageBoxDefaultButton.Button2) == DialogResult.Yes;
         }
+
         private static void OpenUrl(string url)
         {
-            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-            catch (Exception ex) { ThemedMessageBox.Show(null, "Unable to open the link.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                ThemedMessageBox.Show(
+                    null,
+                    "Unable to open the link.\r\n\r\n" + ex.Message,
+                    "Layer Renamer",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
+
         private static void OpenBundledDocument(string fileName, string fallbackUrl)
         {
             string assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -472,16 +703,81 @@ namespace AutoCADLayerRenamer
             string localFile = candidates.FirstOrDefault(File.Exists);
             OpenUrl(localFile ?? fallbackUrl);
         }
-        private void GitHub_Click(object sender, EventArgs e) { OpenUrl("https://github.com/OliversDev"); }
-        private void LinkedIn_Click(object sender, EventArgs e) { OpenUrl("https://ca.linkedin.com/in/oliverwackenreuther"); }
-        private void linkLblFootnote_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) { OpenUrl("https://ca.linkedin.com/in/oliverwackenreuther"); }
-        private void linkLblLicense_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) { OpenBundledDocument("LICENSE.txt", "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt"); }
-        private void linkLblPrivacy_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) { OpenBundledDocument("privacy.html", "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/PRIVACY.md"); }
-        private void linkLblHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) { OpenBundledDocument("index.html", "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD"); }
+
+        private void GitHub_Click(object sender, EventArgs e)
+        {
+            OpenUrl("https://github.com/OliversDev");
+        }
+
+        private void LinkedIn_Click(object sender, EventArgs e)
+        {
+            OpenUrl("https://ca.linkedin.com/in/oliverwackenreuther");
+        }
+
+        private void linkLblFootnote_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            OpenUrl("https://ca.linkedin.com/in/oliverwackenreuther");
+        }
+
+        private void linkLblLicense_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            OpenBundledDocument(
+                "LICENSE.txt",
+                "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt");
+        }
+
+        private void linkLblPrivacy_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            OpenBundledDocument(
+                "privacy.html",
+                "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/PRIVACY.md");
+        }
+
+        private void linkLblHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            OpenBundledDocument(
+                "index.html",
+                "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD");
+        }
+
+        private sealed class LayerInfo
+        {
+            public LayerInfo(
+                ObjectId id,
+                string name,
+                string color,
+                string linetype,
+                bool isFrozen,
+                bool isLocked,
+                string lineweight)
+            {
+                Id = id;
+                Name = name;
+                Color = color;
+                Linetype = linetype;
+                IsFrozen = isFrozen;
+                IsLocked = isLocked;
+                Lineweight = lineweight;
+            }
+
+            public ObjectId Id { get; private set; }
+            public string Name { get; private set; }
+            public string Color { get; private set; }
+            public string Linetype { get; private set; }
+            public bool IsFrozen { get; private set; }
+            public bool IsLocked { get; private set; }
+            public string Lineweight { get; private set; }
+        }
 
         private sealed class RenameItem
         {
-            public RenameItem(ObjectId id, string oldName, string newName) { Id = id; OldName = oldName; NewName = newName; }
+            public RenameItem(ObjectId id, string oldName, string newName)
+            {
+                Id = id;
+                OldName = oldName;
+                NewName = newName;
+            }
+
             public ObjectId Id { get; private set; }
             public string OldName { get; private set; }
             public string NewName { get; private set; }
