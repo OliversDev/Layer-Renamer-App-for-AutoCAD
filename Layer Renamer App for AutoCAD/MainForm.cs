@@ -19,6 +19,7 @@ namespace AutoCADLayerRenamer
         private readonly HashSet<ObjectId> selectedLayerIds = new HashSet<ObjectId>();
         private readonly Dictionary<string, ObjectId> existingLayers = new Dictionary<string, ObjectId>(StringComparer.OrdinalIgnoreCase);
         private bool restoringSelection;
+        private bool generatedScriptIsRunnable;
 
         public LayerRenameForm()
         {
@@ -178,6 +179,7 @@ namespace AutoCADLayerRenamer
         private void UpdatePreview()
         {
             foreach (DataRow row in layerTable.Rows) row["NewName"] = BuildNewName((string)row["LayerName"]);
+            UpdateGeneratedScript();
         }
 
         private string BuildNewName(string oldName)
@@ -301,9 +303,150 @@ namespace AutoCADLayerRenamer
             }
         }
 
+        private void UpdateGeneratedScript()
+        {
+            if (txtGeneratedScript == null) return;
+
+            if (selectedLayerIds.Count == 0)
+            {
+                SetGeneratedScriptMessage("Select one or more layers to generate a script.");
+                return;
+            }
+
+            List<RenameItem> plan = BuildPlan();
+            if (plan.Count == 0)
+            {
+                SetGeneratedScriptMessage("The selected options do not change any layer names.");
+                return;
+            }
+
+            string error;
+            if (!ValidatePlan(plan, out error))
+            {
+                SetGeneratedScriptMessage("Script cannot be generated: " + NormalizeScriptMessage(error));
+                return;
+            }
+
+            txtGeneratedScript.Text = BuildGeneratedScript(plan);
+            generatedScriptIsRunnable = true;
+            btnCopyScript.Enabled = true;
+            btnSaveScript.Enabled = true;
+        }
+
+        private void SetGeneratedScriptMessage(string message)
+        {
+            generatedScriptIsRunnable = false;
+            txtGeneratedScript.Text = "; " + message;
+            btnCopyScript.Enabled = false;
+            btnSaveScript.Enabled = false;
+        }
+
+        private string BuildGeneratedScript(IList<RenameItem> plan)
+        {
+            var reservedNames = new HashSet<string>(existingLayers.Keys, StringComparer.OrdinalIgnoreCase);
+            foreach (RenameItem item in plan) reservedNames.Add(item.NewName);
+
+            var temporaryNames = new Dictionary<ObjectId, string>();
+            foreach (RenameItem item in plan)
+            {
+                string baseName = "__LR_TMP_" + item.Id.Handle;
+                string temporaryName = baseName;
+                int suffix = 1;
+                while (!reservedNames.Add(temporaryName))
+                    temporaryName = baseName + "_" + suffix++;
+                temporaryNames[item.Id] = temporaryName;
+            }
+
+            var lines = new List<string>
+            {
+                "; Layer Renamer generated script",
+                "; Generated for the currently selected layers.",
+                "; The temporary-name pass allows swaps and chained renames.",
+                string.Empty
+            };
+
+            foreach (RenameItem item in plan)
+            {
+                lines.Add(BuildRenameScriptCommand(item.OldName, temporaryNames[item.Id]));
+            }
+
+            lines.Add(string.Empty);
+
+            foreach (RenameItem item in plan)
+            {
+                lines.Add(BuildRenameScriptCommand(temporaryNames[item.Id], item.NewName));
+            }
+
+            return string.Join(Environment.NewLine, lines) + Environment.NewLine;
+        }
+
+        private static string BuildRenameScriptCommand(string oldName, string newName)
+        {
+            return "(command-s \"_.-RENAME\" \"_Layer\" \"" + EscapeAutoLispString(oldName) +
+                   "\" \"" + EscapeAutoLispString(newName) + "\")";
+        }
+
+        private static string EscapeAutoLispString(string value)
+        {
+            return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        }
+
+        private static string NormalizeScriptMessage(string value)
+        {
+            return value.Replace("\r", " ").Replace("\n", " ");
+        }
+
+        private void btnCopyScript_Click(object sender, EventArgs e)
+        {
+            if (!generatedScriptIsRunnable) return;
+
+            try
+            {
+                Clipboard.SetText(txtGeneratedScript.Text);
+                ShowMessageDialog("The generated script was copied to the clipboard.", "Layer Renamer", MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                ShowMessageDialog("The script could not be copied.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnSaveScript_Click(object sender, EventArgs e)
+        {
+            if (!generatedScriptIsRunnable) return;
+
+            try
+            {
+                using (var dialog = new SaveFileDialog
+                {
+                    AddExtension = true,
+                    DefaultExt = "scr",
+                    FileName = "LayerRenamer-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".scr",
+                    Filter = "AutoCAD scripts (*.scr)|*.scr|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                    OverwritePrompt = true,
+                    RestoreDirectory = true,
+                    Title = "Save Generated Layer Rename Script"
+                })
+                {
+                    if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                    File.WriteAllText(dialog.FileName, txtGeneratedScript.Text);
+                }
+
+                ShowMessageDialog("The generated script was saved successfully.", "Layer Renamer", MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                ShowMessageDialog("The script could not be saved.\r\n\r\n" + ex.Message, "Layer Renamer", MessageBoxIcon.Error);
+            }
+        }
+
         private void btnClearFilter_Click(object sender, EventArgs e) { txtFilter.Clear(); }
         private void btnClose_Click(object sender, EventArgs e) { Close(); }
-        private void UpdateSelectionLabel() { lblSelection.Text = selectedLayerIds.Count + " selected"; }
+        private void UpdateSelectionLabel()
+        {
+            lblSelection.Text = selectedLayerIds.Count + " selected";
+            UpdateGeneratedScript();
+        }
         private void ShowMessageDialog(string message, string title, MessageBoxIcon icon)
         {
             ThemedMessageBox.Show(this, message, title, MessageBoxButtons.OK, icon);
