@@ -44,13 +44,31 @@ namespace AutoCADLayerRenamer
                 Dock = DockStyle.Fill,
                 Padding = new Padding(0),
                 ColumnCount = 1,
-                RowCount = 5
+                RowCount = 4
             };
-            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 210F));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
+
+            var layers = new GroupBox
+            {
+                Text = "Layers",
+                Dock = DockStyle.Fill,
+                Padding = new Padding(10),
+                Margin = new Padding(10, 10, 10, 10)
+            };
+
+            var layersLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+            layersLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layersLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
             var search = new TableLayoutPanel
             {
@@ -58,7 +76,7 @@ namespace AutoCADLayerRenamer
                 AutoSize = true,
                 ColumnCount = 5,
                 RowCount = 2,
-                Margin = new Padding(10, 10, 10, 10)
+                Margin = new Padding(0, 4, 0, 8)
             };
             search.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
             search.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
@@ -137,11 +155,19 @@ namespace AutoCADLayerRenamer
                 ReadOnly = true,
                 RowHeadersVisible = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                Margin = new Padding(10, 0, 10, 10),
-                ColumnHeadersHeight = 30,
+                BorderStyle = BorderStyle.FixedSingle,
+                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+                ColumnHeadersHeight = 32,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+                Margin = new Padding(0),
+                ScrollBars = ScrollBars.Both,
                 RowTemplate = { Height = 26 }
             };
             dataGridViewLayers.SelectionChanged += dataGridViewLayers_SelectionChanged;
+            layersLayout.Controls.Add(search, 0, 0);
+            layersLayout.Controls.Add(dataGridViewLayers, 0, 1);
+            layers.Controls.Add(layersLayout);
 
             var options = new GroupBox
             {
@@ -237,6 +263,7 @@ namespace AutoCADLayerRenamer
             txtGeneratedScript = new TextBox
             {
                 Dock = DockStyle.Fill,
+                BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Consolas", 9F),
                 Margin = new Padding(0, 4, 0, 0),
                 Multiline = true,
@@ -301,8 +328,8 @@ namespace AutoCADLayerRenamer
             footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
@@ -333,7 +360,7 @@ namespace AutoCADLayerRenamer
 
             var help = FooterLink("Help");
             help.LinkClicked += linkLblHelp_LinkClicked;
-            footerPanel.Controls.Add(help, 7, 0);
+            footerPanel.Controls.Add(help, 6, 0);
 
             btnRename = new Button
             {
@@ -356,11 +383,10 @@ namespace AutoCADLayerRenamer
             btnClose.Click += btnClose_Click;
             footerPanel.Controls.Add(btnClose, 9, 0);
 
-            root.Controls.Add(search, 0, 0);
-            root.Controls.Add(dataGridViewLayers, 0, 1);
-            root.Controls.Add(options, 0, 2);
-            root.Controls.Add(grpScript, 0, 3);
-            root.Controls.Add(footerPanel, 0, 4);
+            root.Controls.Add(layers, 0, 0);
+            root.Controls.Add(options, 0, 1);
+            root.Controls.Add(grpScript, 0, 2);
+            root.Controls.Add(footerPanel, 0, 3);
 
             Controls.Add(root);
             AcceptButton = btnRename;

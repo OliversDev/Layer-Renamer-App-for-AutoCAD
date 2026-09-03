@@ -83,10 +83,12 @@ namespace AutoCADLayerRenamer
         private void ConfigureGrid()
         {
             dataGridViewLayers.Columns["LayerId"].Visible = false;
-            dataGridViewLayers.Columns["LayerName"].HeaderText = "Layer";
-            dataGridViewLayers.Columns["NewName"].HeaderText = "New Name";
+            dataGridViewLayers.Columns["LayerName"].HeaderText = "Current Layer Name";
+            dataGridViewLayers.Columns["NewName"].HeaderText = "Proposed Layer Name";
+            dataGridViewLayers.Columns["Linetype"].HeaderText = "Line Type";
             dataGridViewLayers.Columns["IsFrozen"].HeaderText = "Frozen";
             dataGridViewLayers.Columns["IsLocked"].HeaderText = "Locked";
+            dataGridViewLayers.Columns["Lineweight"].HeaderText = "Line Weight";
             dataGridViewLayers.Columns["LayerName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             dataGridViewLayers.Columns["NewName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             dataGridViewLayers.Columns["Color"].Width = 90;
@@ -95,11 +97,19 @@ namespace AutoCADLayerRenamer
             dataGridViewLayers.Columns["IsLocked"].Width = 64;
             dataGridViewLayers.Columns["Lineweight"].Width = 105;
 
+            dataGridViewLayers.ColumnHeadersDefaultCellStyle.Font =
+                new System.Drawing.Font(dataGridViewLayers.Font, System.Drawing.FontStyle.Bold);
+            dataGridViewLayers.ColumnHeadersDefaultCellStyle.Alignment =
+                DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewLayers.ColumnHeadersDefaultCellStyle.Padding = new Padding(6, 0, 6, 0);
+            dataGridViewLayers.DefaultCellStyle.Padding = new Padding(6, 0, 6, 0);
+
             foreach (string name in new[] { "IsFrozen", "IsLocked" })
             {
                 DataGridViewColumn column = dataGridViewLayers.Columns[name];
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                column.DefaultCellStyle.Padding = new Padding(0);
                 column.DefaultCellStyle.ForeColor = SystemColors.GrayText;
             }
         }
@@ -420,17 +430,14 @@ namespace AutoCADLayerRenamer
                 return false;
             }
 
-            var stagedIds = new HashSet<ObjectId>(plan.Select(item => item.Id));
-            foreach (KeyValuePair<string, ObjectId> existing in existingLayers)
+            foreach (RenameItem item in plan)
             {
-                if (!stagedIds.Contains(existing.Value) &&
-                    plan.Any(item => string.Equals(
-                        item.NewName,
-                        existing.Key,
-                        StringComparison.OrdinalIgnoreCase)))
+                ObjectId existingId;
+                if (existingLayers.TryGetValue(item.NewName, out existingId) &&
+                    existingId != item.Id)
                 {
-                    error = "A layer named \"" + existing.Key +
-                            "\" already exists and is not included in the staged rename operation.";
+                    error = "A layer named \"" + item.NewName +
+                            "\" already exists. Choose a different resulting name.";
                     return false;
                 }
             }
@@ -464,35 +471,16 @@ namespace AutoCADLayerRenamer
 
         private string BuildGeneratedScript(IList<RenameItem> plan)
         {
-            var reservedNames = new HashSet<string>(existingLayers.Keys, StringComparer.OrdinalIgnoreCase);
-            foreach (RenameItem item in plan) reservedNames.Add(item.NewName);
-
-            var temporaryNames = new Dictionary<ObjectId, string>();
-            foreach (RenameItem item in plan)
-            {
-                string baseName = "__LR_TMP_" + item.Id.Handle;
-                string temporaryName = baseName;
-                int suffix = 1;
-                while (!reservedNames.Add(temporaryName))
-                    temporaryName = baseName + "_" + suffix++;
-                temporaryNames[item.Id] = temporaryName;
-            }
-
-            var lines = new List<string>();
-            foreach (RenameItem item in plan)
-                lines.Add(BuildRenameScriptCommand(item.OldName, temporaryNames[item.Id]));
-
-            lines.Add(string.Empty);
-
-            foreach (RenameItem item in plan)
-                lines.Add(BuildRenameScriptCommand(temporaryNames[item.Id], item.NewName));
+            List<string> lines = plan
+                .Select(item => BuildRenameScriptCommand(item.OldName, item.NewName))
+                .ToList();
 
             return NormalizeScriptText(string.Join(Environment.NewLine, lines), true);
         }
 
         private static string BuildRenameScriptCommand(string oldName, string newName)
         {
-            return "(command-s \"_.-RENAME\" \"_Layer\" \"" + EscapeAutoLispString(oldName) +
+            return "(command \"_.-RENAME\" \"_Layer\" \"" + EscapeAutoLispString(oldName) +
                    "\" \"" + EscapeAutoLispString(newName) + "\")";
         }
 
@@ -722,8 +710,8 @@ namespace AutoCADLayerRenamer
         private void linkLblLicense_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             OpenBundledDocument(
-                "LICENSE.txt",
-                "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.txt");
+                "license.html",
+                "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/LICENSE.html");
         }
 
         private void linkLblPrivacy_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

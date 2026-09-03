@@ -6,15 +6,15 @@ Safely preview and rename multiple AutoCAD layers using prefix, suffix, and find
 
 ## Description
 
-Layer Renamer is a focused AutoCAD productivity tool for renaming multiple drawing layers in one operation. Select layers, enter a prefix or suffix, optionally find and replace part of each name, and review the resulting names before committing the change.
+Layer Renamer is a focused AutoCAD productivity tool for renaming multiple drawing layers. Select layers, enter a prefix or suffix, optionally find and replace part of each name, and review the resulting names before adding them to the read-only script.
 
-The app checks every proposed name before modifying the drawing. It prevents invalid characters, empty names, names longer than AutoCAD's limit, duplicate results, and conflicts with existing layers. Selections are preserved while filtering, and the rename is committed as one AutoCAD transaction.
+The app checks every proposed name before adding it to the script. It prevents invalid characters, empty names, names longer than AutoCAD's limit, duplicate results, and conflicts with existing layers. Selections are preserved while filtering. The generated script can be copied, saved, or run in the active drawing.
 
 The interface follows the Windows light or dark application theme and keeps the workflow intentionally simple.
 
 ## General usage instructions
 
-Open **Layer Renamer** from the **Plug-Ins** ribbon tab or enter `OW:LayerRenamer`. Select one or more layers in the grid. Enter a prefix and/or suffix, or enable **Find and Replace** to change part of each name. Use **Match case** if needed. Review the **New Name** preview, then select **RENAME** and confirm. Layer 0, Defpoints, and externally dependent layers are excluded.
+Open **Layer Renamer** from the **Plug-Ins** ribbon tab or enter `OW:LayerRenamer`. Select one or more layers in the grid. Enter a prefix and/or suffix, and optionally enter **Find** and **Replace** text. Review the **Proposed Layer Name** preview and select **Add To Script List**. Repeat as needed, then copy or save the read-only script or select **Rename** to run it. Layer 0, Defpoints, and externally dependent layers are excluded.
 
 ## Installation
 

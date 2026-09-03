@@ -6,11 +6,12 @@ Layer Renamer is a focused AutoCAD add-in for safely renaming multiple drawing l
 
 - Rename multiple selected layers in one operation.
 - Add a prefix, suffix, or both.
-- Find and replace text with optional case-sensitive matching.
+- Find and replace text without requiring another option to be enabled.
 - Preview every resulting name before renaming.
-- Filter layers by partial text or `*` wildcard patterns while preserving selection.
+- Filter layers by exact name or `*` and `?` wildcard patterns while preserving selection.
 - Prevent empty names, invalid characters, names longer than 255 characters, duplicate results, and collisions with existing layers.
-- Apply the complete rename as one AutoCAD transaction so a failure does not leave a partial result.
+- Build a read-only script with one direct AutoCAD rename command per staged layer.
+- Copy or save the generated script, or run it in the active drawing.
 - Exclude layer `0`, `Defpoints`, and externally dependent layers.
 - Display layer colour, linetype, frozen state, locked state, and lineweight.
 - Follow the Windows light or dark application theme.
@@ -39,11 +40,12 @@ OW:LayerRenamer
 
 1. Select one or more layers in the grid.
 2. Enter a prefix and/or suffix.
-3. Enable **Find and Replace** when part of the existing name should change.
-4. Review the **New Name** preview column.
-5. Select **RENAME** and confirm the operation.
+3. Optionally enter text in **Find** and **Replace** when part of the existing name should change.
+4. Review the **Proposed Layer Name** preview column and select **Add To Script List**.
+5. Repeat for other layer selections and rename options as needed.
+6. Copy or save the read-only script, or select **Rename** and confirm to run it.
 
-The operation is undoable through AutoCAD's normal undo workflow. Maintain current backups and review the preview before renaming production drawings.
+Each rename command can be reversed through AutoCAD's normal undo workflow while the drawing remains open. Maintain current backups and review the preview before renaming production drawings.
 
 ## Uninstallation
 
@@ -73,4 +75,4 @@ Marketplace artwork is maintained under `AppStore\Assets`, including exact 100, 
 
 ## License and third-party notices
 
-See [LICENSE.txt](LICENSE.txt) for the risk disclaimer and MIT terms. Licensed Dazzle icon sources under `Layer Renamer App for AutoCAD\dazzleicons` are intentionally ignored by Git; see [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+See [LICENSE.html](LICENSE.html) for the risk disclaimer and MIT terms. Licensed Dazzle icon sources under `Layer Renamer App for AutoCAD\dazzleicons` are intentionally ignored by Git; see [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

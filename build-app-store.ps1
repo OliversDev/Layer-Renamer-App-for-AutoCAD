@@ -134,8 +134,8 @@ Copy-Item `
     -Force
 
 Copy-Item `
-    -LiteralPath (Join-Path $repositoryRoot "LICENSE.txt") `
-    -Destination (Join-Path $helpDir "LICENSE.txt") `
+    -LiteralPath (Join-Path $repositoryRoot "LICENSE.html") `
+    -Destination (Join-Path $helpDir "license.html") `
     -Force
 
 Copy-Item `

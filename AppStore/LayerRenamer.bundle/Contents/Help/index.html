@@ -12,7 +12,7 @@
 </head>
 <body>
   <h1>Layer Renamer for AutoCAD</h1>
-  <p>Layer Renamer safely previews and applies prefix, suffix, and find-and-replace rules to multiple drawing layers.</p>
+  <p>Layer Renamer previews prefix, suffix, and find-and-replace rules and builds a reusable AutoCAD rename script.</p>
 
   <h2>Start the app</h2>
   <p>Open the <strong>Plug-Ins</strong> ribbon tab and select <strong>Layer Renamer</strong>, or enter <code>OW:LayerRenamer</code> at the AutoCAD command line.</p>
@@ -20,22 +20,23 @@
   <h2>Rename layers</h2>
   <ol>
     <li>Select one or more layers in the grid. Use Ctrl or Shift for multiple rows.</li>
-    <li>Optionally filter the list. Partial text and the <code>*</code> wildcard are supported, and selections remain selected while filtering.</li>
+    <li>Optionally filter the list. Filtering is exact by default; use <code>*</code> or <code>?</code> as wildcards. Selections remain selected while filtering.</li>
     <li>Enter a prefix and/or suffix.</li>
-    <li>Enable <strong>Find and Replace</strong> when part of the existing layer name should change. Enable <strong>Match case</strong> when required.</li>
-    <li>Review the <strong>New Name</strong> preview column.</li>
-    <li>Select <strong>RENAME</strong> and confirm.</li>
+    <li>Optionally enter text in <strong>Find</strong> and <strong>Replace</strong> to change part of the existing name.</li>
+    <li>Review the <strong>Proposed Layer Name</strong> column, then select <strong>Add To Script List</strong>.</li>
+    <li>Repeat with other selected layers and rename options as needed.</li>
+    <li>Copy or save the read-only script, or select <strong>Rename</strong> to run it in the active drawing.</li>
   </ol>
 
   <div class="note">Layer 0, Defpoints, and externally dependent layers are not offered for renaming. Layer Renamer rejects invalid, duplicate, conflicting, or over-length names before changing the drawing. Keep current backups and review all previews before use on production drawings.</div>
 
-  <h2>Undo</h2>
-  <p>A rename operation is committed as one AutoCAD transaction and can be reversed through AutoCAD's normal undo workflow while the drawing remains open.</p>
+  <h2>Generated script</h2>
+  <p>Each staged layer creates one direct <code>-RENAME</code> command containing the current and proposed layer names. Because the script intentionally remains simple, a proposed name cannot already exist in the drawing.</p>
 
   <h2>Support and legal information</h2>
   <p><a href="https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD">Project and support page</a></p>
   <p><a href="privacy.html">Privacy policy</a></p>
-  <p><a href="LICENSE.txt">License and risk disclaimer</a></p>
+  <p><a href="license.html">License and risk disclaimer</a></p>
   <p><a href="THIRD-PARTY-NOTICES.txt">Third-party notices</a></p>
   <p>Autodesk and AutoCAD are registered trademarks of Autodesk, Inc. This application is not affiliated with, endorsed by, sponsored by, or supported by Autodesk, Inc.</p>
 </body>

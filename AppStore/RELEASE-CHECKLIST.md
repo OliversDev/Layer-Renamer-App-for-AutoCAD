@@ -14,7 +14,7 @@
 - Test the Plug-Ins ribbon button and `OW:LayerRenamer` command.
 - Test Windows light, dark, and high-contrast modes at 100%, 125%, and 150% display scaling.
 - Test partial filtering, `*` wildcards, Ctrl/Shift selection, and selection persistence.
-- Test prefix, suffix, find/replace, match case, preview, confirmation, and AutoCAD undo.
+- Test prefix, suffix, find/replace, exact and wildcard filtering, persistent selection, script staging, copy, save, confirmation, and AutoCAD undo.
 - Verify rejection of invalid, empty, duplicate, conflicting, and over-length names.
 - Verify layer 0, Defpoints, and dependent xref layers cannot be selected.
 - Verify Help, License, Privacy, GitHub, and LinkedIn links.
