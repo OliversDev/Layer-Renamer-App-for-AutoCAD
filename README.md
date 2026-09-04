@@ -1,16 +1,17 @@
 # Layer Renamer for AutoCAD
 
-Layer Renamer is a focused AutoCAD add-in for safely renaming multiple drawing layers. It combines prefix, suffix, and optional find-and-replace rules with live previews and collision checks before any drawing change is committed.
+Layer Renamer is a focused AutoCAD add-in for renaming drawing layers through generated or manually edited AutoCAD script commands. It supports prefix, suffix, find-and-replace, and exact-name methods with validation before generated commands are added.
 
 ## Features
 
 - Rename multiple selected layers in one operation.
 - Add a prefix, suffix, or both.
 - Find and replace text without requiring another option to be enabled.
-- Preview every resulting name before renaming.
-- Filter layers by exact name or `*` and `?` wildcard patterns while preserving selection.
+- Rename one selected layer directly to an exact name.
+- Filter layers by exact name or `*` wildcard patterns while preserving selection.
 - Prevent empty names, invalid characters, names longer than 255 characters, duplicate results, and collisions with existing layers.
-- Build a read-only script with one direct AutoCAD rename command per staged layer.
+- Build an editable script with one direct AutoCAD rename command per selected layer.
+- Enter or revise script commands manually before running them.
 - Copy or save the generated script, or run it in the active drawing.
 - Exclude layer `0`, `Defpoints`, and externally dependent layers.
 - Display layer colour, linetype, frozen state, locked state, and lineweight.
@@ -39,11 +40,11 @@ OW:LayerRenamer
 ## Usage
 
 1. Select one or more layers in the grid.
-2. Enter a prefix and/or suffix.
-3. Optionally enter text in **Find** and **Replace** when part of the existing name should change.
-4. Review the **Proposed Layer Name** preview column and select **Add To Script List**.
-5. Repeat for other layer selections and rename options as needed.
-6. Copy or save the read-only script, or select **Rename** and confirm to run it.
+2. Enter a prefix and/or suffix, or optionally enter **Find** and **Replace** text.
+3. To assign an exact name, select one layer and enter the result in **Rename To (single layer)**. This overrides the other rename fields.
+4. Select **Add To Script List** and repeat for other layer selections as needed.
+5. Review or manually edit the script.
+6. Copy or save the script, or select **Rename** and confirm to run it.
 
 Each rename command can be reversed through AutoCAD's normal undo workflow while the drawing remains open. Maintain current backups and review the preview before renaming production drawings.
 

@@ -12,6 +12,7 @@ namespace AutoCADLayerRenamer
         private TextBox txtSuffix;
         private TextBox txtFind;
         private TextBox txtReplace;
+        private TextBox txtExactName;
         private Label lblSelection;
         private TableLayoutPanel footerPanel;
         private GroupBox grpScript;
@@ -108,7 +109,7 @@ namespace AutoCADLayerRenamer
             btnClearFilter = new Button
             {
                 Text = "Clear Filter",
-                Size = new Size(125, 30),
+                Size = new Size(95, 30),
                 Anchor = AnchorStyles.Right,
                 Margin = new Padding(0, 0, 10, 0)
             };
@@ -118,7 +119,7 @@ namespace AutoCADLayerRenamer
             btnRefresh = new Button
             {
                 Text = "Refresh",
-                Size = new Size(125, 30),
+                Size = new Size(95, 30),
                 Anchor = AnchorStyles.Right,
                 Margin = new Padding(0, 0, 10, 0)
             };
@@ -136,7 +137,7 @@ namespace AutoCADLayerRenamer
 
             var filterHint = new Label
             {
-                Text = "Exact by default. Use * or ? as wildcards.",
+                Text = "Exact by default. Use * as a wildcard.",
                 AutoSize = true,
                 Anchor = AnchorStyles.Left,
                 Margin = new Padding(0, 2, 0, 0)
@@ -157,12 +158,12 @@ namespace AutoCADLayerRenamer
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 BorderStyle = BorderStyle.FixedSingle,
                 CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
-                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single,
                 ColumnHeadersHeight = 32,
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
                 Margin = new Padding(0),
-                ScrollBars = ScrollBars.Both,
-                RowTemplate = { Height = 26 }
+                ScrollBars = ScrollBars.Vertical,
+                RowTemplate = { Height = 24 }
             };
             dataGridViewLayers.SelectionChanged += dataGridViewLayers_SelectionChanged;
             layersLayout.Controls.Add(search, 0, 0);
@@ -183,7 +184,7 @@ namespace AutoCADLayerRenamer
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 ColumnCount = 1,
-                RowCount = 2,
+                RowCount = 3,
                 Margin = new Padding(0),
                 Padding = new Padding(0)
             };
@@ -193,9 +194,12 @@ namespace AutoCADLayerRenamer
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 ColumnCount = 4,
-                RowCount = 2,
+                RowCount = 3,
                 Margin = new Padding(0)
             };
+            optionGrid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            optionGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 10F));
+            optionGrid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             optionGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -207,17 +211,32 @@ namespace AutoCADLayerRenamer
             optionGrid.Controls.Add(InputLabel("Suffix"), 2, 0);
             txtSuffix = InputBox();
             optionGrid.Controls.Add(txtSuffix, 3, 0);
-            optionGrid.Controls.Add(InputLabel("Find (optional)"), 0, 1);
+            optionGrid.Controls.Add(InputLabel("Find (optional)"), 0, 2);
             txtFind = InputBox();
-            optionGrid.Controls.Add(txtFind, 1, 1);
-            optionGrid.Controls.Add(InputLabel("Replace"), 2, 1);
+            optionGrid.Controls.Add(txtFind, 1, 2);
+            optionGrid.Controls.Add(InputLabel("Replace"), 2, 2);
             txtReplace = InputBox();
-            optionGrid.Controls.Add(txtReplace, 3, 1);
+            optionGrid.Controls.Add(txtReplace, 3, 2);
+
+            var exactNameGrid = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                ColumnCount = 2,
+                RowCount = 1,
+                Margin = new Padding(0, 7, 0, 0)
+            };
+            exactNameGrid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            exactNameGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            exactNameGrid.Controls.Add(InputLabel("Rename To (single layer)"), 0, 0);
+            txtExactName = InputBox();
+            exactNameGrid.Controls.Add(txtExactName, 1, 0);
 
             txtPrefix.TextChanged += RenameOptionChanged;
             txtSuffix.TextChanged += RenameOptionChanged;
             txtFind.TextChanged += RenameOptionChanged;
             txtReplace.TextChanged += RenameOptionChanged;
+            txtExactName.TextChanged += RenameOptionChanged;
 
             var addScriptRow = new FlowLayoutPanel
             {
@@ -238,7 +257,8 @@ namespace AutoCADLayerRenamer
             addScriptRow.Controls.Add(btnAddToScriptList);
 
             optionLayout.Controls.Add(optionGrid, 0, 0);
-            optionLayout.Controls.Add(addScriptRow, 0, 1);
+            optionLayout.Controls.Add(exactNameGrid, 0, 1);
+            optionLayout.Controls.Add(addScriptRow, 0, 2);
             options.Controls.Add(optionLayout);
 
             grpScript = new GroupBox
@@ -267,11 +287,14 @@ namespace AutoCADLayerRenamer
                 Font = new Font("Consolas", 9F),
                 Margin = new Padding(0, 4, 0, 0),
                 Multiline = true,
-                ReadOnly = true,
-                ScrollBars = ScrollBars.Both,
-                TabStop = false,
-                WordWrap = false
+                AcceptsReturn = true,
+                AcceptsTab = true,
+                ReadOnly = false,
+                ScrollBars = ScrollBars.Vertical,
+                TabStop = true,
+                WordWrap = true
             };
+            txtGeneratedScript.TextChanged += txtGeneratedScript_TextChanged;
 
             var scriptButtons = new FlowLayoutPanel
             {
@@ -285,7 +308,7 @@ namespace AutoCADLayerRenamer
             btnSaveScript = new Button
             {
                 Text = "Save Script",
-                Size = new Size(125, 30),
+                Size = new Size(95, 30),
                 Margin = new Padding(10, 0, 0, 0)
             };
             btnSaveScript.Click += btnSaveScript_Click;
@@ -293,7 +316,7 @@ namespace AutoCADLayerRenamer
             btnCopyScript = new Button
             {
                 Text = "Copy Script",
-                Size = new Size(125, 30),
+                Size = new Size(95, 30),
                 Margin = new Padding(10, 0, 0, 0)
             };
             btnCopyScript.Click += btnCopyScript_Click;
@@ -301,7 +324,7 @@ namespace AutoCADLayerRenamer
             btnClearScript = new Button
             {
                 Text = "Clear Script",
-                Size = new Size(125, 30),
+                Size = new Size(95, 30),
                 Margin = new Padding(0)
             };
             btnClearScript.Click += btnClearScript_Click;
@@ -365,7 +388,7 @@ namespace AutoCADLayerRenamer
             btnRename = new Button
             {
                 Text = "Rename",
-                Size = new Size(125, 30),
+                Size = new Size(95, 30),
                 Anchor = AnchorStyles.Right,
                 Margin = new Padding(0, 0, 10, 0)
             };
@@ -375,7 +398,7 @@ namespace AutoCADLayerRenamer
             btnClose = new Button
             {
                 Text = "Close",
-                Size = new Size(125, 30),
+                Size = new Size(95, 30),
                 Anchor = AnchorStyles.Right,
                 Margin = new Padding(0),
                 DialogResult = DialogResult.Cancel

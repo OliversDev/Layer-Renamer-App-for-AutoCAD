@@ -2,19 +2,19 @@
 
 ## Short description
 
-Safely preview and rename multiple AutoCAD layers using prefix, suffix, and find-and-replace rules.
+Build, review, and run AutoCAD layer rename scripts using flexible naming rules.
 
 ## Description
 
-Layer Renamer is a focused AutoCAD productivity tool for renaming multiple drawing layers. Select layers, enter a prefix or suffix, optionally find and replace part of each name, and review the resulting names before adding them to the read-only script.
+Layer Renamer is a focused AutoCAD productivity tool for renaming drawing layers. Select layers and apply a prefix, suffix, find-and-replace rule, or an exact name for one selected layer. Generated commands are added to an editable script for review.
 
-The app checks every proposed name before adding it to the script. It prevents invalid characters, empty names, names longer than AutoCAD's limit, duplicate results, and conflicts with existing layers. Selections are preserved while filtering. The generated script can be copied, saved, or run in the active drawing.
+The app checks every generated name before adding it to the script. It prevents invalid characters, empty names, names longer than AutoCAD's limit, duplicate results, and conflicts with existing layers. Selections are preserved while filtering. The script can be manually edited, copied, saved, or run in the active drawing.
 
 The interface follows the Windows light or dark application theme and keeps the workflow intentionally simple.
 
 ## General usage instructions
 
-Open **Layer Renamer** from the **Plug-Ins** ribbon tab or enter `OW:LayerRenamer`. Select one or more layers in the grid. Enter a prefix and/or suffix, and optionally enter **Find** and **Replace** text. Review the **Proposed Layer Name** preview and select **Add To Script List**. Repeat as needed, then copy or save the read-only script or select **Rename** to run it. Layer 0, Defpoints, and externally dependent layers are excluded.
+Open **Layer Renamer** from the **Plug-Ins** ribbon tab or enter `OW:LayerRenamer`. Select layers in the grid and enter a prefix, suffix, or optional **Find** and **Replace** text. To rename one layer to any exact string, use **Rename To (single layer)**. Select **Add To Script List**, repeat as needed, and review or manually edit the script. Copy, save, or select **Rename** to run it. Layer 0, Defpoints, and externally dependent layers are excluded.
 
 ## Installation
 
@@ -30,7 +30,7 @@ For product support, usage questions, or defect reports, use the support contact
 
 ## Additional information and known issues
 
-Layer Renamer supports AutoCAD 2026 and AutoCAD 2027 on 64-bit Windows. It does not rename layer 0, Defpoints, or externally dependent layers. AutoCAD prevents some layer changes based on drawing state or object dependencies. Always maintain current drawing backups and review the preview column before renaming production layers. No known unresolved application defects are included with version 2.0.0.
+Layer Renamer supports AutoCAD 2026 and AutoCAD 2027 on 64-bit Windows. It does not rename layer 0, Defpoints, or externally dependent layers. AutoCAD prevents some layer changes based on drawing state or object dependencies. Always maintain current drawing backups and review the generated or manually edited script before renaming production layers. No known unresolved application defects are included with version 2.0.0.
 
 ## Commands
 

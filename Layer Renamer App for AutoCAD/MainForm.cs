@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using Autodesk.AutoCAD.DatabaseServices;
 using DataTable = System.Data.DataTable;
 
@@ -22,10 +23,7 @@ namespace AutoCADLayerRenamer
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, ObjectId> existingLayers =
             new Dictionary<string, ObjectId>(StringComparer.OrdinalIgnoreCase);
-        private readonly List<RenameItem> stagedRenameItems = new List<RenameItem>();
-
         private bool restoringSelection;
-        private bool generatedScriptIsRunnable;
 
         public LayerRenameForm()
         {
@@ -71,31 +69,25 @@ namespace AutoCADLayerRenamer
         {
             layerTable.Columns.Add("LayerId", typeof(ObjectId));
             layerTable.Columns.Add("LayerName", typeof(string));
-            layerTable.Columns.Add("NewName", typeof(string));
             layerTable.Columns.Add("Color", typeof(string));
             layerTable.Columns.Add("Linetype", typeof(string));
             layerTable.Columns.Add("IsFrozen", typeof(bool));
             layerTable.Columns.Add("IsLocked", typeof(bool));
-            layerTable.Columns.Add("Lineweight", typeof(string));
             dataGridViewLayers.DataSource = layerTable;
         }
 
         private void ConfigureGrid()
         {
             dataGridViewLayers.Columns["LayerId"].Visible = false;
-            dataGridViewLayers.Columns["LayerName"].HeaderText = "Current Layer Name";
-            dataGridViewLayers.Columns["NewName"].HeaderText = "Proposed Layer Name";
+            dataGridViewLayers.Columns["LayerName"].HeaderText = "Layer Name";
             dataGridViewLayers.Columns["Linetype"].HeaderText = "Line Type";
             dataGridViewLayers.Columns["IsFrozen"].HeaderText = "Frozen";
             dataGridViewLayers.Columns["IsLocked"].HeaderText = "Locked";
-            dataGridViewLayers.Columns["Lineweight"].HeaderText = "Line Weight";
             dataGridViewLayers.Columns["LayerName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewLayers.Columns["NewName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             dataGridViewLayers.Columns["Color"].Width = 90;
             dataGridViewLayers.Columns["Linetype"].Width = 110;
             dataGridViewLayers.Columns["IsFrozen"].Width = 64;
             dataGridViewLayers.Columns["IsLocked"].Width = 64;
-            dataGridViewLayers.Columns["Lineweight"].Width = 105;
 
             dataGridViewLayers.ColumnHeadersDefaultCellStyle.Font =
                 new System.Drawing.Font(dataGridViewLayers.Font, System.Drawing.FontStyle.Bold);
@@ -106,12 +98,48 @@ namespace AutoCADLayerRenamer
 
             foreach (string name in new[] { "IsFrozen", "IsLocked" })
             {
-                DataGridViewColumn column = dataGridViewLayers.Columns[name];
+                var column = dataGridViewLayers.Columns[name] as DataGridViewCheckBoxColumn;
+                if (column == null) continue;
+
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column.ReadOnly = true;
+                column.FlatStyle = FlatStyle.Flat;
+                column.ThreeState = false;
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 column.DefaultCellStyle.Padding = new Padding(0);
                 column.DefaultCellStyle.ForeColor = SystemColors.GrayText;
             }
+
+            dataGridViewLayers.CellPainting += dataGridViewLayers_CellPainting;
+        }
+
+        private void dataGridViewLayers_CellPainting(
+            object sender,
+            DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            string columnName = dataGridViewLayers.Columns[e.ColumnIndex].Name;
+            if (!string.Equals(columnName, "IsFrozen", StringComparison.Ordinal) &&
+                !string.Equals(columnName, "IsLocked", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            e.PaintBackground(e.CellBounds, true);
+            e.Paint(e.CellBounds, DataGridViewPaintParts.Border);
+
+            bool isChecked = e.FormattedValue != null && Convert.ToBoolean(e.FormattedValue);
+            CheckBoxState state = isChecked
+                ? CheckBoxState.CheckedDisabled
+                : CheckBoxState.UncheckedDisabled;
+            System.Drawing.Size glyphSize = CheckBoxRenderer.GetGlyphSize(e.Graphics, state);
+            System.Drawing.Point glyphLocation = new System.Drawing.Point(
+                e.CellBounds.Left + (e.CellBounds.Width - glyphSize.Width) / 2,
+                e.CellBounds.Top + (e.CellBounds.Height - glyphSize.Height) / 2);
+
+            CheckBoxRenderer.DrawCheckBox(e.Graphics, glyphLocation, state);
+            e.Handled = true;
         }
 
         private void LoadLayers()
@@ -164,8 +192,7 @@ namespace AutoCADLayerRenamer
                             layer.Color.ToString(),
                             linetype,
                             layer.IsFrozen,
-                            layer.IsLocked,
-                            layer.LineWeight.ToString()));
+                            layer.IsLocked));
                     }
 
                     transaction.Commit();
@@ -246,12 +273,10 @@ namespace AutoCADLayerRenamer
                     layerTable.Rows.Add(
                         layer.Id,
                         layer.Name,
-                        BuildNewName(layer.Name),
                         layer.Color,
                         layer.Linetype,
                         layer.IsFrozen,
-                        layer.IsLocked,
-                        layer.Lineweight);
+                        layer.IsLocked);
                 }
 
                 dataGridViewLayers.ClearSelection();
@@ -274,13 +299,12 @@ namespace AutoCADLayerRenamer
         {
             if (string.IsNullOrWhiteSpace(filter)) return true;
 
-            bool containsWildcard = filter.IndexOf('*') >= 0 || filter.IndexOf('?') >= 0;
+            bool containsWildcard = filter.IndexOf('*') >= 0;
             if (!containsWildcard)
                 return string.Equals(layerName, filter, StringComparison.OrdinalIgnoreCase);
 
             string pattern = "^" + Regex.Escape(filter)
-                .Replace(@"\*", ".*")
-                .Replace(@"\?", ".") + "$";
+                .Replace(@"\*", ".*") + "$";
 
             return Regex.IsMatch(
                 layerName,
@@ -290,17 +314,18 @@ namespace AutoCADLayerRenamer
 
         private void RenameOptionChanged(object sender, EventArgs e)
         {
-            UpdatePreview();
-        }
-
-        private void UpdatePreview()
-        {
-            foreach (DataRow row in layerTable.Rows)
-                row["NewName"] = BuildNewName((string)row["LayerName"]);
+            bool useExactName = !string.IsNullOrWhiteSpace(txtExactName.Text);
+            txtPrefix.Enabled = !useExactName;
+            txtSuffix.Enabled = !useExactName;
+            txtFind.Enabled = !useExactName;
+            txtReplace.Enabled = !useExactName;
         }
 
         private string BuildNewName(string oldName)
         {
+            if (!string.IsNullOrWhiteSpace(txtExactName.Text))
+                return txtExactName.Text.Trim();
+
             string name = oldName;
             if (txtFind.Text.Length > 0)
                 name = ReplaceOrdinalIgnoreCase(name, txtFind.Text, txtReplace.Text);
@@ -359,6 +384,15 @@ namespace AutoCADLayerRenamer
                 return;
             }
 
+            if (!string.IsNullOrWhiteSpace(txtExactName.Text) && selectedLayerNames.Count != 1)
+            {
+                ShowMessageDialog(
+                    "Rename To can only be used when exactly one layer is selected.",
+                    "Layer Renamer",
+                    MessageBoxIcon.Information);
+                return;
+            }
+
             List<RenameItem> selectionPlan = BuildCurrentSelectionPlan();
             if (selectionPlan.Count == 0)
             {
@@ -369,24 +403,21 @@ namespace AutoCADLayerRenamer
                 return;
             }
 
-            var candidate = stagedRenameItems.ToDictionary(item => item.Id);
-            foreach (RenameItem item in selectionPlan)
-                candidate[item.Id] = item;
-
-            List<RenameItem> combinedPlan = candidate.Values
-                .OrderBy(item => item.OldName, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
             string error;
-            if (!ValidatePlan(combinedPlan, out error))
+            if (!ValidatePlan(selectionPlan, out error))
             {
                 ShowMessageDialog(error, "Layer Renamer", MessageBoxIcon.Warning);
                 return;
             }
 
-            stagedRenameItems.Clear();
-            stagedRenameItems.AddRange(combinedPlan);
-            UpdateScriptDisplay();
+            string commands = BuildGeneratedScript(selectionPlan).TrimEnd();
+            if (txtGeneratedScript.TextLength > 0 &&
+                !txtGeneratedScript.Text.EndsWith(Environment.NewLine, StringComparison.Ordinal))
+            {
+                txtGeneratedScript.AppendText(Environment.NewLine);
+            }
+
+            txtGeneratedScript.AppendText(commands + Environment.NewLine);
         }
 
         private bool ValidatePlan(IList<RenameItem> plan, out string error)
@@ -454,19 +485,16 @@ namespace AutoCADLayerRenamer
 
         private void UpdateScriptDisplay()
         {
-            generatedScriptIsRunnable = stagedRenameItems.Count > 0;
-            txtGeneratedScript.Text = generatedScriptIsRunnable
-                ? BuildGeneratedScript(stagedRenameItems)
-                : "; Select layers, set the rename options, and click Add To Script List.";
+            bool hasScript = !string.IsNullOrWhiteSpace(txtGeneratedScript.Text);
+            btnCopyScript.Enabled = hasScript;
+            btnSaveScript.Enabled = hasScript;
+            btnClearScript.Enabled = hasScript;
+            btnRename.Enabled = hasScript;
+        }
 
-            grpScript.Text = generatedScriptIsRunnable
-                ? "Script (" + stagedRenameItems.Count + " staged)"
-                : "Script";
-
-            btnCopyScript.Enabled = generatedScriptIsRunnable;
-            btnSaveScript.Enabled = generatedScriptIsRunnable;
-            btnClearScript.Enabled = generatedScriptIsRunnable;
-            btnRename.Enabled = generatedScriptIsRunnable;
+        private void txtGeneratedScript_TextChanged(object sender, EventArgs e)
+        {
+            UpdateScriptDisplay();
         }
 
         private string BuildGeneratedScript(IList<RenameItem> plan)
@@ -508,25 +536,23 @@ namespace AutoCADLayerRenamer
 
         private void btnRename_Click(object sender, EventArgs e)
         {
-            if (!generatedScriptIsRunnable)
+            string[] commands = txtGeneratedScript.Lines
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToArray();
+
+            if (commands.Length == 0)
             {
                 ShowMessageDialog(
-                    "Add one or more layer rename operations to the script first.",
+                    "Enter or add one or more script commands first.",
                     "Layer Renamer",
                     MessageBoxIcon.Information);
                 return;
             }
 
-            string error;
-            if (!ValidatePlan(stagedRenameItems, out error))
-            {
-                ShowMessageDialog(error, "Layer Renamer", MessageBoxIcon.Warning);
-                return;
-            }
-
             if (!ShowConfirmationDialog(
-                "Run " + stagedRenameItems.Count + " staged layer rename" +
-                (stagedRenameItems.Count == 1 ? "?" : "s?"),
+                "Run " + commands.Length + " script command" +
+                (commands.Length == 1 ? "?" : "s?"),
                 "Layer Renamer"))
             {
                 return;
@@ -537,11 +563,6 @@ namespace AutoCADLayerRenamer
                 var document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
                 if (document == null)
                     throw new InvalidOperationException("No active AutoCAD drawing is available.");
-
-                string[] commands = txtGeneratedScript.Lines
-                    .Select(line => line.Trim())
-                    .Where(line => !string.IsNullOrWhiteSpace(line))
-                    .ToArray();
 
                 Hide();
                 document.Window.Focus();
@@ -563,7 +584,7 @@ namespace AutoCADLayerRenamer
 
         private void btnCopyScript_Click(object sender, EventArgs e)
         {
-            if (!generatedScriptIsRunnable) return;
+            if (string.IsNullOrWhiteSpace(txtGeneratedScript.Text)) return;
 
             try
             {
@@ -584,7 +605,7 @@ namespace AutoCADLayerRenamer
 
         private void btnSaveScript_Click(object sender, EventArgs e)
         {
-            if (!generatedScriptIsRunnable) return;
+            if (string.IsNullOrWhiteSpace(txtGeneratedScript.Text)) return;
 
             try
             {
@@ -622,14 +643,12 @@ namespace AutoCADLayerRenamer
 
         private void btnClearScript_Click(object sender, EventArgs e)
         {
-            stagedRenameItems.Clear();
-            UpdateScriptDisplay();
+            txtGeneratedScript.Clear();
         }
 
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             LoadLayers();
-            UpdatePreview();
         }
 
         private void btnClearFilter_Click(object sender, EventArgs e)
@@ -736,8 +755,7 @@ namespace AutoCADLayerRenamer
                 string color,
                 string linetype,
                 bool isFrozen,
-                bool isLocked,
-                string lineweight)
+                bool isLocked)
             {
                 Id = id;
                 Name = name;
@@ -745,7 +763,6 @@ namespace AutoCADLayerRenamer
                 Linetype = linetype;
                 IsFrozen = isFrozen;
                 IsLocked = isLocked;
-                Lineweight = lineweight;
             }
 
             public ObjectId Id { get; private set; }
@@ -754,7 +771,6 @@ namespace AutoCADLayerRenamer
             public string Linetype { get; private set; }
             public bool IsFrozen { get; private set; }
             public bool IsLocked { get; private set; }
-            public string Lineweight { get; private set; }
         }
 
         private sealed class RenameItem

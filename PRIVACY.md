@@ -7,7 +7,7 @@ Layer Renamer does not collect, transmit, sell, rent, or share personal informat
 
 The application reads layer information from the active AutoCAD drawing and processes rename instructions locally on the user's computer solely to perform the operation requested by the user. It does not require a Publisher account and does not use telemetry, advertising, tracking technologies, cloud processing, or third-party SDKs that receive application data.
 
-Layer Renamer does not create application logs or retain drawing or layer information outside the active AutoCAD drawing. The application contains optional links to GitHub and LinkedIn. These sites are opened only when a user selects a link; no drawing or layer information is sent to them by Layer Renamer. Use of external sites is governed by their respective privacy policies.
+Layer Renamer does not create application logs or automatically retain drawing or layer information outside the active AutoCAD drawing. If the user selects **Save Script**, the current script is saved locally to the file and location chosen by the user. The application contains optional links to GitHub and LinkedIn. These sites are opened only when a user selects a link; no drawing or layer information is sent to them by Layer Renamer. Use of external sites is governed by their respective privacy policies.
 
 Information independently processed by Autodesk in connection with Marketplace access, downloads, accounts, or AutoCAD is governed by Autodesk's privacy policies and is not received through Layer Renamer.
 

@@ -27,7 +27,7 @@ namespace AutoCADLayerRenamer
             bool isDark = IsWindowsDarkMode();
             ThemePalette palette = CreatePalette(isDark);
 
-            ApplyForm(form, primaryButton, isDark, palette);
+            ApplyForm(form, null, isDark, palette);
 
             footerPanel.BackColor = palette.Surface;
             footerPanel.ForeColor = palette.Text;
@@ -45,8 +45,8 @@ namespace AutoCADLayerRenamer
                 }
             }
 
-            // The footer surface pass must not overwrite the primary action colour.
-            ApplyPrimaryButton(primaryButton);
+            // The main action follows the outlined Batch Scripter treatment.
+            ApplyOutlinedActionButton(primaryButton, palette);
 
             ApplyBrandLogo(logo, palette.Text, isDark);
             Color socialIconColour = isDark ? Color.White : Color.Black;
@@ -71,7 +71,8 @@ namespace AutoCADLayerRenamer
             form.ForeColor = palette.Text;
 
             ApplyToChildren(form, isDark, palette);
-            ApplyPrimaryButton(primaryButton);
+            if (primaryButton != null)
+                ApplyPrimaryButton(primaryButton);
             ApplyNativeWindowTheme(form, isDark);
         }
 
@@ -85,30 +86,32 @@ namespace AutoCADLayerRenamer
                 {
                     control.BackColor = palette.Background;
                 }
-                else if (control is TextBox || control is ListBox)
+                else if (control is TextBoxBase)
+                {
+                    var textBox = (TextBoxBase)control;
+                    textBox.BorderStyle = BorderStyle.FixedSingle;
+                    textBox.BackColor = textBox.Enabled && !textBox.ReadOnly
+                        ? palette.Input
+                        : palette.AlternateSurface;
+                    ApplyNativeControlTheme(control, isDark);
+                    textBox.EnabledChanged -= TextBox_StateChanged;
+                    textBox.EnabledChanged += TextBox_StateChanged;
+                    textBox.ReadOnlyChanged -= TextBox_StateChanged;
+                    textBox.ReadOnlyChanged += TextBox_StateChanged;
+                }
+                else if (control is ListBox)
                 {
                     control.BackColor = palette.Input;
                     ApplyNativeControlTheme(control, isDark);
                 }
                 else if (control is DataGridView)
                 {
-                    DataGridView grid = (DataGridView)control;
-                    grid.BackgroundColor = palette.Surface;
-                    grid.BorderStyle = BorderStyle.FixedSingle;
-                    grid.GridColor = palette.Border;
-                    grid.EnableHeadersVisualStyles = false;
-                    grid.ColumnHeadersDefaultCellStyle.BackColor = palette.Surface;
-                    grid.ColumnHeadersDefaultCellStyle.ForeColor = palette.Text;
-                    grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = palette.Surface;
-                    grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = palette.Text;
-                    grid.DefaultCellStyle.BackColor = palette.Input;
-                    grid.DefaultCellStyle.ForeColor = palette.Text;
-                    grid.DefaultCellStyle.SelectionBackColor = Accent;
-                    grid.DefaultCellStyle.SelectionForeColor = Color.White;
-                    grid.AlternatingRowsDefaultCellStyle.BackColor = isDark
-                        ? Color.FromArgb(42, 42, 44)
-                        : Color.FromArgb(250, 250, 250);
-                    ApplyNativeControlTheme(grid, isDark);
+                    ApplyDataGridViewTheme((DataGridView)control, isDark, palette);
+                }
+                else if (control is ScrollBar)
+                {
+                    control.BackColor = palette.Surface;
+                    ApplyNativeControlTheme(control, isDark);
                 }
                 else if (control is Button)
                 {
@@ -139,6 +142,119 @@ namespace AutoCADLayerRenamer
             button.FlatAppearance.BorderColor = Accent;
             button.FlatAppearance.MouseOverBackColor = Color.FromArgb(16, 110, 190);
             button.FlatAppearance.MouseDownBackColor = Color.FromArgb(0, 90, 158);
+        }
+
+        private static void TextBox_StateChanged(object sender, EventArgs e)
+        {
+            var textBox = sender as TextBoxBase;
+            if (textBox == null) return;
+
+            ThemePalette palette = CreatePalette(IsWindowsDarkMode());
+            textBox.BackColor = textBox.Enabled && !textBox.ReadOnly
+                ? palette.Input
+                : palette.AlternateSurface;
+        }
+
+        private static void ApplyOutlinedActionButton(Button button, ThemePalette palette)
+        {
+            if (button == null) return;
+
+            button.UseVisualStyleBackColor = false;
+            button.FlatStyle = FlatStyle.Flat;
+            button.BackColor = palette.Surface;
+            button.ForeColor = Accent;
+            button.FlatAppearance.BorderColor = Accent;
+            button.FlatAppearance.BorderSize = 1;
+            button.FlatAppearance.MouseOverBackColor = palette.AlternateSurface;
+            button.FlatAppearance.MouseDownBackColor = Accent;
+
+            button.MouseDown -= OutlinedActionButton_MouseDown;
+            button.MouseDown += OutlinedActionButton_MouseDown;
+            button.MouseUp -= OutlinedActionButton_MouseUp;
+            button.MouseUp += OutlinedActionButton_MouseUp;
+            button.MouseLeave -= OutlinedActionButton_MouseLeave;
+            button.MouseLeave += OutlinedActionButton_MouseLeave;
+        }
+
+        private static void OutlinedActionButton_MouseDown(object sender, MouseEventArgs e)
+        {
+            var button = sender as Button;
+            if (button == null) return;
+            button.BackColor = Accent;
+            button.ForeColor = Color.White;
+        }
+
+        private static void OutlinedActionButton_MouseUp(object sender, MouseEventArgs e)
+        {
+            RestoreOutlinedActionButton(sender as Button);
+        }
+
+        private static void OutlinedActionButton_MouseLeave(object sender, EventArgs e)
+        {
+            RestoreOutlinedActionButton(sender as Button);
+        }
+
+        private static void RestoreOutlinedActionButton(Button button)
+        {
+            if (button == null) return;
+            ThemePalette palette = CreatePalette(IsWindowsDarkMode());
+            button.BackColor = palette.Surface;
+            button.ForeColor = Accent;
+        }
+
+        private static void ApplyDataGridViewTheme(
+            DataGridView grid,
+            bool isDark,
+            ThemePalette palette)
+        {
+            Color headerSurface = isDark
+                ? Color.FromArgb(55, 55, 58)
+                : Color.FromArgb(232, 232, 232);
+
+            grid.EnableHeadersVisualStyles = false;
+            grid.BackgroundColor = palette.Surface;
+            grid.BorderStyle = BorderStyle.FixedSingle;
+            grid.GridColor = palette.Border;
+            grid.ForeColor = palette.Text;
+            grid.RowHeadersVisible = false;
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            grid.MultiSelect = true;
+
+            grid.DefaultCellStyle.BackColor = palette.Surface;
+            grid.DefaultCellStyle.ForeColor = palette.Text;
+            grid.DefaultCellStyle.SelectionBackColor = Accent;
+            grid.DefaultCellStyle.SelectionForeColor = Color.White;
+            grid.DefaultCellStyle.NullValue = string.Empty;
+
+            grid.RowsDefaultCellStyle.BackColor = palette.Surface;
+            grid.RowsDefaultCellStyle.ForeColor = palette.Text;
+            grid.RowsDefaultCellStyle.SelectionBackColor = Accent;
+            grid.RowsDefaultCellStyle.SelectionForeColor = Color.White;
+
+            grid.AlternatingRowsDefaultCellStyle.BackColor = palette.AlternateSurface;
+            grid.AlternatingRowsDefaultCellStyle.ForeColor = palette.Text;
+            grid.AlternatingRowsDefaultCellStyle.SelectionBackColor = Accent;
+            grid.AlternatingRowsDefaultCellStyle.SelectionForeColor = Color.White;
+
+            grid.ColumnHeadersDefaultCellStyle.BackColor = headerSurface;
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = palette.Text;
+            grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = headerSurface;
+            grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = palette.Text;
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font(
+                "Segoe UI",
+                9F,
+                FontStyle.Bold,
+                GraphicsUnit.Point);
+            grid.RowTemplate.Height = 24;
+
+            ApplyNativeControlTheme(grid, isDark);
+            foreach (Control child in grid.Controls)
+            {
+                if (child is ScrollBar)
+                    ApplyNativeControlTheme(child, isDark);
+            }
         }
 
         private static void ApplyNativeWindowTheme(Form form, bool isDark)
@@ -269,6 +385,7 @@ namespace AutoCADLayerRenamer
                 ? new ThemePalette(
                     Color.FromArgb(30, 30, 30),
                     Color.FromArgb(45, 45, 48),
+                    Color.FromArgb(52, 52, 55),
                     Color.FromArgb(37, 37, 38),
                     Color.FromArgb(245, 245, 245),
                     Color.FromArgb(80, 80, 84),
@@ -277,6 +394,7 @@ namespace AutoCADLayerRenamer
                 : new ThemePalette(
                     Color.FromArgb(245, 245, 245),
                     Color.White,
+                    Color.FromArgb(244, 246, 248),
                     Color.White,
                     Color.FromArgb(32, 32, 32),
                     Color.FromArgb(190, 190, 190),
@@ -309,6 +427,7 @@ namespace AutoCADLayerRenamer
             public ThemePalette(
                 Color background,
                 Color surface,
+                Color alternateSurface,
                 Color input,
                 Color text,
                 Color border,
@@ -317,6 +436,7 @@ namespace AutoCADLayerRenamer
             {
                 Background = background;
                 Surface = surface;
+                AlternateSurface = alternateSurface;
                 Input = input;
                 Text = text;
                 Border = border;
@@ -326,6 +446,7 @@ namespace AutoCADLayerRenamer
 
             public Color Background { get; }
             public Color Surface { get; }
+            public Color AlternateSurface { get; }
             public Color Input { get; }
             public Color Text { get; }
             public Color Border { get; }
