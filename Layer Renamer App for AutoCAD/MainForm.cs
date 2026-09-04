@@ -9,7 +9,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 using Autodesk.AutoCAD.DatabaseServices;
 using DataTable = System.Data.DataTable;
 
@@ -17,6 +16,10 @@ namespace AutoCADLayerRenamer
 {
     public partial class LayerRenameForm : Form
     {
+        private static readonly Regex RenameCommandPattern = new Regex(
+            @"^\(\s*command\s+""(?<command>[^""]+)""\s+""(?<type>[^""]+)""\s+""(?<old>(?:\\.|[^""])*)""\s+""(?<new>(?:\\.|[^""])*)""\s*\)\s*$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
         private readonly DataTable layerTable = new DataTable();
         private readonly List<LayerInfo> allLayers = new List<LayerInfo>();
         private readonly HashSet<string> selectedLayerNames =
@@ -130,15 +133,7 @@ namespace AutoCADLayerRenamer
             e.Paint(e.CellBounds, DataGridViewPaintParts.Border);
 
             bool isChecked = e.FormattedValue != null && Convert.ToBoolean(e.FormattedValue);
-            CheckBoxState state = isChecked
-                ? CheckBoxState.CheckedDisabled
-                : CheckBoxState.UncheckedDisabled;
-            System.Drawing.Size glyphSize = CheckBoxRenderer.GetGlyphSize(e.Graphics, state);
-            System.Drawing.Point glyphLocation = new System.Drawing.Point(
-                e.CellBounds.Left + (e.CellBounds.Width - glyphSize.Width) / 2,
-                e.CellBounds.Top + (e.CellBounds.Height - glyphSize.Height) / 2);
-
-            CheckBoxRenderer.DrawCheckBox(e.Graphics, glyphLocation, state);
+            LayerRenamerTheme.DrawReadOnlyCheckBox(e.Graphics, e.CellBounds, isChecked);
             e.Handled = true;
         }
 
@@ -538,7 +533,8 @@ namespace AutoCADLayerRenamer
         {
             string[] commands = txtGeneratedScript.Lines
                 .Select(line => line.Trim())
-                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Where(line => !string.IsNullOrWhiteSpace(line) &&
+                               !line.StartsWith(";", StringComparison.Ordinal))
                 .ToArray();
 
             if (commands.Length == 0)
@@ -550,10 +546,18 @@ namespace AutoCADLayerRenamer
                 return;
             }
 
-            if (!ShowConfirmationDialog(
-                "Run " + commands.Length + " script command" +
-                (commands.Length == 1 ? "?" : "s?"),
-                "Layer Renamer"))
+            string conflictWarning = BuildScriptConflictWarning(commands);
+            bool confirmed = string.IsNullOrEmpty(conflictWarning)
+                ? ShowConfirmationDialog(
+                    "Run " + commands.Length + " script command" +
+                    (commands.Length == 1 ? "?" : "s?"),
+                    "Layer Renamer")
+                : ShowWarningConfirmationDialog(
+                    conflictWarning +
+                    "\r\n\r\nThese commands may fail or produce incomplete results. Run the script anyway?",
+                    "Layer Renamer - Potential Conflicts");
+
+            if (!confirmed)
             {
                 return;
             }
@@ -580,6 +584,85 @@ namespace AutoCADLayerRenamer
                     "Layer Renamer",
                     MessageBoxIcon.Error);
             }
+        }
+
+        private static string BuildScriptConflictWarning(IEnumerable<string> scriptLines)
+        {
+            List<ScriptRenameCommand> renameCommands = scriptLines
+                .Select(ParseRenameCommand)
+                .Where(command => command != null)
+                .ToList();
+
+            List<string> duplicateTargets = renameCommands
+                .GroupBy(command => command.NewName, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            List<string> repeatedSources = renameCommands
+                .GroupBy(command => command.OldName, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var sections = new List<string>();
+            if (duplicateTargets.Count > 0)
+            {
+                sections.Add(
+                    "Multiple layers are being renamed to the same layer name:\r\n" +
+                    string.Join("\r\n", duplicateTargets.Select(name => "  • " + name)));
+            }
+
+            if (repeatedSources.Count > 0)
+            {
+                sections.Add(
+                    "The same existing layer is being renamed more than once:\r\n" +
+                    string.Join("\r\n", repeatedSources.Select(name => "  • " + name)));
+            }
+
+            return string.Join("\r\n\r\n", sections);
+        }
+
+        private static ScriptRenameCommand ParseRenameCommand(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line) ||
+                line.TrimStart().StartsWith(";", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            Match match = RenameCommandPattern.Match(line.Trim());
+            if (!match.Success) return null;
+
+            string commandName = match.Groups["command"].Value
+                .Replace("_", string.Empty)
+                .Replace(".", string.Empty);
+            string objectType = match.Groups["type"].Value.Replace("_", string.Empty);
+            if (!string.Equals(commandName, "-RENAME", StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(objectType, "Layer", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return new ScriptRenameCommand(
+                UnescapeAutoLispString(match.Groups["old"].Value),
+                UnescapeAutoLispString(match.Groups["new"].Value));
+        }
+
+        private static string UnescapeAutoLispString(string value)
+        {
+            var builder = new StringBuilder();
+            for (int index = 0; index < value.Length; index++)
+            {
+                if (value[index] == '\\' && index + 1 < value.Length)
+                    index++;
+
+                builder.Append(value[index]);
+            }
+
+            return builder.ToString();
         }
 
         private void btnCopyScript_Click(object sender, EventArgs e)
@@ -679,6 +762,17 @@ namespace AutoCADLayerRenamer
                 title,
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question,
+                MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+        }
+
+        private bool ShowWarningConfirmationDialog(string message, string title)
+        {
+            return ThemedMessageBox.Show(
+                this,
+                message,
+                title,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2) == DialogResult.Yes;
         }
 
@@ -783,6 +877,18 @@ namespace AutoCADLayerRenamer
             }
 
             public ObjectId Id { get; private set; }
+            public string OldName { get; private set; }
+            public string NewName { get; private set; }
+        }
+
+        private sealed class ScriptRenameCommand
+        {
+            public ScriptRenameCommand(string oldName, string newName)
+            {
+                OldName = oldName;
+                NewName = newName;
+            }
+
             public string OldName { get; private set; }
             public string NewName { get; private set; }
         }

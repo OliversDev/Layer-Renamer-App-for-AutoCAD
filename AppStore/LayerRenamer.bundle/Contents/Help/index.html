@@ -25,13 +25,14 @@
     <li>To assign any exact name, select one layer and enter the result in <strong>Rename To (single layer)</strong>. This field overrides the other rename options.</li>
     <li>Select <strong>Add To Script List</strong>.</li>
     <li>Repeat with other selected layers and rename options as needed.</li>
-    <li>Review or manually edit the script, then copy, save, or select <strong>Rename</strong> to run it in the active drawing.</li>
+    <li>Review or manually edit the script, then copy, save, or select <strong>Rename</strong> to run it in the active drawing. Begin a line with <code>;</code> to comment it out.</li>
   </ol>
 
   <div class="note">Layer 0, Defpoints, and externally dependent layers are not offered for renaming. Layer Renamer rejects invalid, duplicate, conflicting, or over-length names before changing the drawing. Keep current backups and review all previews before use on production drawings.</div>
 
   <h2>Generated script</h2>
   <p>Each generated layer rename creates one direct <code>-RENAME</code> command containing the current and resulting layer names. Generated commands are validated before they are added. Manually entered commands are run as written and are the user's responsibility to review.</p>
+  <p>Before running, Layer Renamer examines active commands matching its generated layer-rename format. It warns if multiple layers use the same destination name or if the same source layer is renamed more than once. Commented lines and unrelated manual script content are excluded from this check. The warning allows the user to cancel or continue.</p>
 
   <h2>Support and legal information</h2>
   <p><a href="https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD">Project and support page</a></p>

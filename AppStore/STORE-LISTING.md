@@ -8,7 +8,7 @@ Build, review, and run AutoCAD layer rename scripts using flexible naming rules.
 
 Layer Renamer is a focused AutoCAD productivity tool for renaming drawing layers. Select layers and apply a prefix, suffix, find-and-replace rule, or an exact name for one selected layer. Generated commands are added to an editable script for review.
 
-The app checks every generated name before adding it to the script. It prevents invalid characters, empty names, names longer than AutoCAD's limit, duplicate results, and conflicts with existing layers. Selections are preserved while filtering. The script can be manually edited, copied, saved, or run in the active drawing.
+The app checks every generated name before adding it to the script. It prevents invalid characters, empty names, names longer than AutoCAD's limit, duplicate results, and conflicts with existing layers. Before running, it warns about active rename commands that reuse a destination name or rename the same source layer more than once, while ignoring commented and unrelated script lines. The user can cancel or continue. Selections are preserved while filtering, and the script can be manually edited, copied, saved, or run in the active drawing.
 
 The interface follows the Windows light or dark application theme and keeps the workflow intentionally simple.
 

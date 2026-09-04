@@ -1,8 +1,8 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -50,8 +50,8 @@ namespace AutoCADLayerRenamer
 
             ApplyBrandLogo(logo, palette.Text, isDark);
             Color socialIconColour = isDark ? Color.White : Color.Black;
-            ApplyDazzleIcon(gitHub, "AutoCADLayerRenamer.Dazzle.Github-logo.png", socialIconColour);
-            ApplyDazzleIcon(linkedIn, "AutoCADLayerRenamer.Dazzle.Linkedin-logo.png", socialIconColour);
+            ApplySocialIcon(gitHub, socialIconColour);
+            ApplySocialIcon(linkedIn, socialIconColour);
         }
 
         public static void ApplyDialog(Form form, Button primaryButton)
@@ -257,6 +257,60 @@ namespace AutoCADLayerRenamer
             }
         }
 
+        public static void DrawReadOnlyCheckBox(
+            Graphics graphics,
+            Rectangle cellBounds,
+            bool isChecked)
+        {
+            if (graphics == null) return;
+
+            bool isDark = IsWindowsDarkMode();
+            Color fill = isDark
+                ? Color.FromArgb(68, 68, 71)
+                : Color.FromArgb(232, 232, 232);
+            Color border = isDark
+                ? Color.FromArgb(132, 132, 136)
+                : Color.FromArgb(150, 150, 150);
+            Color check = isDark
+                ? Color.FromArgb(188, 188, 188)
+                : Color.FromArgb(105, 105, 105);
+
+            const int boxSize = 14;
+            var box = new Rectangle(
+                cellBounds.Left + (cellBounds.Width - boxSize) / 2,
+                cellBounds.Top + (cellBounds.Height - boxSize) / 2,
+                boxSize,
+                boxSize);
+
+            SmoothingMode originalSmoothing = graphics.SmoothingMode;
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using (var fillBrush = new SolidBrush(fill))
+            using (var borderPen = new Pen(border, 1F))
+            {
+                graphics.FillRectangle(fillBrush, box);
+                graphics.DrawRectangle(borderPen, box);
+            }
+
+            if (isChecked)
+            {
+                using (var checkPen = new Pen(check, 2F))
+                {
+                    checkPen.StartCap = LineCap.Round;
+                    checkPen.EndCap = LineCap.Round;
+                    graphics.DrawLines(
+                        checkPen,
+                        new[]
+                        {
+                            new Point(box.Left + 3, box.Top + 7),
+                            new Point(box.Left + 6, box.Top + 10),
+                            new Point(box.Left + 11, box.Top + 4)
+                        });
+                }
+            }
+
+            graphics.SmoothingMode = originalSmoothing;
+        }
+
         private static void ApplyNativeWindowTheme(Form form, bool isDark)
         {
             try
@@ -298,17 +352,15 @@ namespace AutoCADLayerRenamer
             }
         }
 
-        private static void ApplyDazzleIcon(PictureBox pictureBox, string resourceName, Color colour)
+        private static void ApplySocialIcon(PictureBox pictureBox, Color colour)
         {
+            if (pictureBox == null || pictureBox.Image == null)
+                return;
+
             try
             {
-                using (Stream stream = typeof(LayerRenamerTheme).Assembly
-                    .GetManifestResourceStream(resourceName))
-                using (Bitmap source = stream == null ? null : new Bitmap(stream))
+                using (Bitmap source = new Bitmap(pictureBox.Image))
                 {
-                    if (source == null)
-                        return;
-
                     Bitmap themed = new Bitmap(source.Width, source.Height, PixelFormat.Format32bppArgb);
                     for (int y = 0; y < source.Height; y++)
                     {

@@ -12,6 +12,7 @@ Layer Renamer is a focused AutoCAD add-in for renaming drawing layers through ge
 - Prevent empty names, invalid characters, names longer than 255 characters, duplicate results, and collisions with existing layers.
 - Build an editable script with one direct AutoCAD rename command per selected layer.
 - Enter or revise script commands manually before running them.
+- Warn before running when active layer-rename commands reuse a destination name or rename the same source layer more than once.
 - Copy or save the generated script, or run it in the active drawing.
 - Exclude layer `0`, `Defpoints`, and externally dependent layers.
 - Display layer colour, linetype, frozen state, locked state, and lineweight.
@@ -44,7 +45,9 @@ OW:LayerRenamer
 3. To assign an exact name, select one layer and enter the result in **Rename To (single layer)**. This overrides the other rename fields.
 4. Select **Add To Script List** and repeat for other layer selections as needed.
 5. Review or manually edit the script.
-6. Copy or save the script, or select **Rename** and confirm to run it.
+6. Copy or save the script, or select **Rename** and confirm to run it. Lines beginning with `;` are treated as comments. Unrelated manual commands are not included in the layer-conflict analysis.
+
+Before execution, Layer Renamer examines active commands that match its generated layer-rename format. If multiple source layers use the same destination name, or one source layer is renamed more than once, the app warns that the script may fail and lets the user cancel or continue.
 
 Each rename command can be reversed through AutoCAD's normal undo workflow while the drawing remains open. Maintain current backups and review the preview before renaming production drawings.
 
@@ -76,4 +79,4 @@ Marketplace artwork is maintained under `AppStore\Assets`, including exact 100, 
 
 ## License and third-party notices
 
-See [LICENSE.html](LICENSE.html) for the risk disclaimer and MIT terms. Licensed Dazzle icon sources under `Layer Renamer App for AutoCAD\dazzleicons` are intentionally ignored by Git; see [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+See [LICENSE.html](LICENSE.html) for the risk disclaimer and MIT terms. The application includes licensed Dazzle icon assets; see [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

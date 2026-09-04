@@ -362,10 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# Licensed Dazzle Pro source assets. Required for local builds but excluded
-# from the public repository; compiled icons remain embedded in the DLL.
-/Layer Renamer App for AutoCAD/dazzleicons/
-
 # Generated Autodesk Marketplace bundles, binaries, CUIX files, and ZIPs.
 /AppStore/artifacts/
 /AppStore/LayerRenamer-*-Autodesk-Marketplace.zip

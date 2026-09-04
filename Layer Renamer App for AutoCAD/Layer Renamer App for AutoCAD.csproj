@@ -8,7 +8,6 @@
 
     <OutputType>Library</OutputType>
     <UseWindowsForms>true</UseWindowsForms>
-    <UseWPF>true</UseWPF>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -65,7 +64,5 @@
       <Generator>ResXFileCodeGenerator</Generator><LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="LayerRenamerIcon.ico" LogicalName="AutoCADLayerRenamer.LayerRenamerIcon.ico" />
-    <EmbeddedResource Include="dazzleicons\Github-logo.png" LogicalName="AutoCADLayerRenamer.Dazzle.Github-logo.png" />
-    <EmbeddedResource Include="dazzleicons\Linkedin-logo.png" LogicalName="AutoCADLayerRenamer.Dazzle.Linkedin-logo.png" />
   </ItemGroup>
 </Project>
