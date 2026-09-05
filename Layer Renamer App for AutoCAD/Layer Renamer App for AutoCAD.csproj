@@ -8,6 +8,11 @@
 
     <OutputType>Library</OutputType>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- AutoCAD 2026 and 2027 managed API assemblies reference the WPF-side
+         WindowsBase assembly matching their .NET runtime. Importing both
+         desktop UI reference sets keeps this WinForms add-in compatible while
+         preventing MSBuild from selecting the WindowsBase facade (4.0.0.0). -->
+    <UseWPF>true</UseWPF>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

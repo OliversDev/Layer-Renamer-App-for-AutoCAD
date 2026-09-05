@@ -15,4 +15,5 @@
 - Added a dedicated Layer Renamer panel to AutoCAD's standard Plug-Ins ribbon tab.
 - Added the two-layer LR application, Marketplace, ribbon, and Windows icon family.
 - Added Marketplace bundle generation, Help, privacy, license, third-party notices, and store-listing content.
-- Cleaned duplicate project images, unused designer metadata, unused WPF configuration, and missing optional resource dependencies.
+- Cleaned duplicate project images, unused designer metadata, and missing optional resource dependencies.
+- Enabled the matching WPF reference set only for the AutoCAD 2027/.NET 10 target to resolve the `WindowsBase` MSB3277 assembly conflict; the application UI remains WinForms.

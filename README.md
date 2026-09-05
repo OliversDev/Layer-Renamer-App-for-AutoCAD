@@ -63,6 +63,8 @@ Layer Renamer does not collect or transmit personal information, drawing informa
 
 The solution builds AutoCAD 2026 with .NET 8 and AutoCAD 2027 with .NET 10. Install the corresponding .NET SDKs and AutoCAD managed APIs, then run from a PowerShell developer prompt:
 
+The AutoCAD 2027 target imports the .NET 10 WPF reference set because Autodesk's managed API depends on its `WindowsBase` assembly. The application itself continues to use Windows Forms.
+
 ```powershell
 .\build-app-store.ps1
 ```
