@@ -103,6 +103,44 @@ foreach ($fileName in $requiredRibbonFiles) {
     }
 }
 
+# Autodesk review requires the partial ribbon to merge into the built-in
+# Add-ins tab and expose contextual F1 help. Keep these acceptance checks
+# here so a future CUI edit cannot accidentally recreate a product-specific tab
+# or remove Layer Renamer help.
+[xml]$ribbonDefinition = Get-Content -LiteralPath (Join-Path $ribbonSource "RibbonRoot.cui") -Raw
+$tabDefinition = $ribbonDefinition.RibbonRoot.RibbonTabSourceCollection.RibbonTabSource
+if ($tabDefinition.Alias -ne "ID_ADDINSTAB" -or
+    $tabDefinition.DefaultDisplay -ne "AddToWorkspace" -or
+    $tabDefinition.WorkspaceBehavior -ne "MergeTabOnly") {
+    throw "Layer Renamer must merge into ID_ADDINSTAB with AddToWorkspace and MergeTabOnly."
+}
+
+[xml]$macroDefinition = Get-Content -LiteralPath (Join-Path $ribbonSource "MenuGroup.cui") -Raw
+$tooltipDefinition = $macroDefinition.MenuGroup.MacroGroup.MenuMacro.Macro.ToolTip
+if ($tooltipDefinition.EnableHelp -ne "true" -or
+    $tooltipDefinition.HelpSource -ne "LayerRenamer.html#layerrenamer") {
+    throw "Layer Renamer contextual F1 help is missing or points to the wrong topic."
+}
+
+[xml]$manifestDefinition = Get-Content -LiteralPath (Join-Path $bundle "PackageContents.xml") -Raw
+$componentSets = @($manifestDefinition.ApplicationPackage.Components)
+foreach ($componentSet in $componentSets) {
+    if ($componentSet.RuntimeRequirements.SupportPath -ne "./Contents/Help") {
+        throw "Every supported AutoCAD version must register ./Contents/Help as a support path."
+    }
+
+    $managedEntry = @($componentSet.ComponentEntry) | Where-Object { $_.ModuleName -like "*.dll" }
+    $command = $managedEntry.Commands.Command
+    if ($command.Global -ne "OW:LayerRenamer" -or $command.HelpTopic -ne "#layerrenamer") {
+        throw "The Layer Renamer command or contextual help topic is not registered correctly."
+    }
+}
+
+$namedHelp = Join-Path $bundle "Contents\Help\LayerRenamer.html"
+if (-not (Test-Path -LiteralPath $namedHelp -PathType Leaf)) {
+    throw "The app-specific LayerRenamer.html help page is missing."
+}
+
 $ribbonWorkRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("LayerRenamerCuix_" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
 $ribbonPackageRoot = Join-Path $ribbonWorkRoot "Package"
 $ribbonZip = Join-Path $ribbonWorkRoot "LayerRenamer.zip"
@@ -131,6 +169,11 @@ finally {
 Copy-Item `
     -LiteralPath (Join-Path $repositoryRoot "Layer Renamer App for AutoCAD\LayerRenamerIcon.ico") `
     -Destination (Join-Path $resourcesDir "LayerRenamer.ico") `
+    -Force
+
+Copy-Item `
+    -LiteralPath (Join-Path $repositoryRoot "AppStore\LayerRenamer.bundle\Contents\Help\LayerRenamer.html") `
+    -Destination (Join-Path $helpDir "LayerRenamer.html") `
     -Force
 
 Copy-Item `

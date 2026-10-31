@@ -837,8 +837,8 @@ namespace AutoCADLayerRenamer
         private void linkLblHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             OpenBundledDocument(
-                "index.html",
-                "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD");
+                "LayerRenamer.html",
+                "https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD#readme");
         }
 
         private sealed class LayerInfo

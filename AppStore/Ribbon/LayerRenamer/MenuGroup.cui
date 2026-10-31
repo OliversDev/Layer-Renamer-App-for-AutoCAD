@@ -11,7 +11,8 @@
         <SmallImage Name="LayerRenamer16.png" />
         <LargeImage Name="LayerRenamer32.png" />
         <CLICommand>OW:LayerRenamer</CLICommand>
-        <ToolTip />
+        <ToolTip CommandName="OW:LayerRenamer" EnableHelp="true"
+                 HelpSource="LayerRenamer.html#layerrenamer" />
       </Macro>
     </MenuMacro>
   </MacroGroup>

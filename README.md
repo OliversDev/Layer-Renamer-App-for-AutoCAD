@@ -32,7 +32,7 @@ For local bundle testing, copy `LayerRenamer.bundle` to:
 C:\Program Files\Autodesk\ApplicationPlugins
 ```
 
-Restart AutoCAD. Open the **Plug-Ins** ribbon tab and select **Layer Renamer**, or enter:
+Restart AutoCAD. Open the standard **Add-ins** ribbon tab and select **Layer Renamer**, or enter:
 
 ```text
 OW:LayerRenamer
@@ -69,7 +69,7 @@ The AutoCAD 2027 target imports the .NET 10 WPF reference set because Autodesk's
 .\build-app-store.ps1
 ```
 
-The script validates both AutoCAD API installations, builds release-specific DLLs, creates the partial CUIX ribbon, stages the complete bundle, copies Help/License/Privacy resources, and writes:
+The script validates both AutoCAD API installations, builds release-specific DLLs, creates and validates the partial CUIX ribbon, stages the complete bundle, copies Help/License/Privacy resources, and writes:
 
 ```text
 AppStore\artifacts\LayerRenamer-2.0.0-Autodesk-Marketplace.zip
@@ -78,6 +78,8 @@ AppStore\artifacts\LayerRenamer-2.0.0-Autodesk-Marketplace.zip
 If AutoCAD is installed elsewhere, pass `-AutoCAD2026Dir` and `-AutoCAD2027Dir`. If the source was downloaded as a ZIP, unblock it in Windows before extracting or use `Unblock-File` on a trusted extracted copy.
 
 Marketplace artwork is maintained under `AppStore\Assets`, including exact 100, 120, and 1024 pixel transparent PNG files, a multi-resolution ICO, and editable SVG sources. The ribbon has separate 16 and 32 pixel assets.
+
+For the normal AutoCAD 2026 development loop, run `Apply-Build-Install-Layer-Renamer-2026.bat` from the update package. It applies the current App Store files to the repository, builds only `net8.0-windows`, stages a complete test bundle, and installs it to `C:\Program Files\Autodesk\ApplicationPlugins\LayerRenamer.bundle`. AutoCAD must be closed and Windows elevation is required.
 
 ## License and third-party notices
 

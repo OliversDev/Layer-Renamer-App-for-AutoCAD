@@ -11,13 +11,15 @@
 ## Functional testing
 
 - Test AutoCAD 2026 and AutoCAD 2027 on clean Windows profiles.
-- Test the Plug-Ins ribbon button and `OW:LayerRenamer` command.
+- Confirm the Layer Renamer panel merges into AutoCAD's standard Add-ins tab and no separate Layer Renamer tab is created.
+- Before opening the app, hover over its ribbon button and press F1; confirm the bundled Layer Renamer help opens.
+- Test the Add-ins ribbon button and `OW:LayerRenamer` command.
 - Test Windows light, dark, and high-contrast modes at 100%, 125%, and 150% display scaling.
 - Test partial filtering, `*` wildcards, Ctrl/Shift selection, and selection persistence.
 - Test prefix, suffix, find/replace, exact-name rename, exact and `*` wildcard filtering, persistent selection, manual script editing, comment handling, duplicate destination warnings, repeated source warnings, copy, save, confirmation, and AutoCAD undo.
 - Verify rejection of invalid, empty, duplicate, conflicting, and over-length names.
 - Verify layer 0, Defpoints, and dependent xref layers cannot be selected.
-- Verify Help, License, Privacy, GitHub, and LinkedIn links.
+- Verify contextual F1 Help plus the License, Privacy, GitHub, and LinkedIn links.
 
 ## Submission content
 

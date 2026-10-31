@@ -14,11 +14,11 @@ The interface follows the Windows light or dark application theme and keeps the 
 
 ## General usage instructions
 
-Open **Layer Renamer** from the **Plug-Ins** ribbon tab or enter `OW:LayerRenamer`. Select layers in the grid and enter a prefix, suffix, or optional **Find** and **Replace** text. To rename one layer to any exact string, use **Rename To (single layer)**. Select **Add To Script List**, repeat as needed, and review or manually edit the script. Copy, save, or select **Rename** to run it. Layer 0, Defpoints, and externally dependent layers are excluded.
+Open **Layer Renamer** from AutoCAD's standard **Add-ins** ribbon tab or enter `OW:LayerRenamer`. Select layers in the grid and enter a prefix, suffix, or optional **Find** and **Replace** text. To rename one layer to any exact string, use **Rename To (single layer)**. Select **Add To Script List**, repeat as needed, and review or manually edit the script. Copy, save, or select **Rename** to run it. Layer 0, Defpoints, and externally dependent layers are excluded.
 
 ## Installation
 
-Download and run the installer from the Autodesk Design and Make Marketplace. The installer registers Layer Renamer for supported AutoCAD versions. Restart AutoCAD after installation. Open the **Plug-Ins** tab and select **Layer Renamer**, or enter `OW:LayerRenamer` at the command line.
+Download and run the installer from the Autodesk Design and Make Marketplace. The installer registers Layer Renamer for supported AutoCAD versions. Restart AutoCAD after installation. Open the standard **Add-ins** tab and select **Layer Renamer**, or enter `OW:LayerRenamer` at the command line.
 
 ## Uninstallation
 
