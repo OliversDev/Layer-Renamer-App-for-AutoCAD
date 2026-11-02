@@ -109,17 +109,21 @@ foreach ($fileName in $requiredRibbonFiles) {
 # or remove Layer Renamer help.
 [xml]$ribbonDefinition = Get-Content -LiteralPath (Join-Path $ribbonSource "RibbonRoot.cui") -Raw
 $tabDefinition = $ribbonDefinition.RibbonRoot.RibbonTabSourceCollection.RibbonTabSource
-if ($tabDefinition.Alias -ne "ID_ADDINSTAB" -or
+if ($tabDefinition.UID -ne "ID_ADDINSTAB" -or
+    $tabDefinition.Alias -ne "ID_ADDINSTAB" -or
     $tabDefinition.DefaultDisplay -ne "AddToWorkspace" -or
     $tabDefinition.WorkspaceBehavior -ne "MergeTabOnly") {
-    throw "Layer Renamer must merge into ID_ADDINSTAB with AddToWorkspace and MergeTabOnly."
+    throw "Layer Renamer must use and merge into ID_ADDINSTAB with AddToWorkspace and MergeTabOnly."
 }
 
 [xml]$macroDefinition = Get-Content -LiteralPath (Join-Path $ribbonSource "MenuGroup.cui") -Raw
-$tooltipDefinition = $macroDefinition.MenuGroup.MacroGroup.MenuMacro.Macro.ToolTip
-if ($tooltipDefinition.EnableHelp -ne "true" -or
+$macroNode = $macroDefinition.MenuGroup.MacroGroup.MenuMacro.Macro
+$tooltipDefinition = $macroNode.ToolTip
+if ($null -ne $macroNode.SelectSingleNode("CLICommand") -or
+    $tooltipDefinition.HasAttribute("CommandName") -or
+    $tooltipDefinition.EnableHelp -ne "true" -or
     $tooltipDefinition.HelpSource -ne "LayerRenamer.html#layerrenamer") {
-    throw "Layer Renamer contextual F1 help is missing or points to the wrong topic."
+    throw "Layer Renamer ribbon must omit CLICommand and tooltip CommandName while retaining contextual F1 help."
 }
 
 [xml]$manifestDefinition = Get-Content -LiteralPath (Join-Path $bundle "PackageContents.xml") -Raw

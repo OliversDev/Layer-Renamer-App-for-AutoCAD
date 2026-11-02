@@ -24,7 +24,7 @@
   </RibbonPanelSourceCollection>
   <RibbonTabSourceCollection>
     <RibbonTabSource Text="Add-ins"
-                     UID="RBN_TAB_LAYERRENAMER"
+                     UID="ID_ADDINSTAB"
                      DefaultDisplay="AddToWorkspace"
                      WorkspaceBehavior="MergeTabOnly">
       <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />

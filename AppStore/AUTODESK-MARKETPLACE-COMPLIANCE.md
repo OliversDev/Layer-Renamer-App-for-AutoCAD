@@ -11,9 +11,9 @@ Layer Renamer implements the Autodesk Marketplace packaging, ribbon, help, priva
 
 ## AutoCAD user experience
 
-- The partial CUIX merges the Layer Renamer panel into AutoCAD's built-in Add-ins tab using `ID_ADDINSTAB`, `AddToWorkspace`, and `MergeTabOnly`.
+- The partial CUIX uses `ID_ADDINSTAB` as both its tab element ID and alias, then merges the Layer Renamer panel into AutoCAD's built-in Add-ins tab using `AddToWorkspace` and `MergeTabOnly`.
 - No separate product ribbon tab is created.
-- The ribbon button includes 16 px and 32 px images, a command tooltip, and enabled contextual F1 help.
+- The ribbon button includes 16 px and 32 px images, a clean tooltip without the command-name line, and enabled contextual F1 help.
 - Bundled HTML Help, Privacy, License/risk disclaimer, and third-party notices are available offline.
 
 ## Marketplace content

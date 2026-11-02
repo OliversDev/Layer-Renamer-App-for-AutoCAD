@@ -45,7 +45,7 @@ namespace AutoCADLayerRenamer
                 }
             }
 
-            // The main action follows the outlined Batch Scripter treatment.
+            // The main action uses the outlined primary-action treatment.
             ApplyOutlinedActionButton(primaryButton, palette);
 
             ApplyBrandLogo(logo, palette.Text, isDark);
