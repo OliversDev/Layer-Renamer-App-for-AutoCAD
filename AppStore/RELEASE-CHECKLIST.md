@@ -4,7 +4,7 @@
 
 - Install the .NET 8 and .NET 10 SDKs.
 - Confirm AutoCAD 2026 and AutoCAD 2027 managed API files are installed.
-- Run `build-app-store.ps1` from the repository root.
+- Run `Apply-Build-Install-Layer-Renamer-2026-2027.bat` from the update package, or run `build-app-store.ps1` from the repository root.
 - Confirm both release DLLs and the generated CUIX are present in `AppStore\artifacts\LayerRenamer.bundle`.
 - Confirm the generated Marketplace ZIP opens without archive errors.
 
@@ -23,10 +23,11 @@
 
 ## Submission content
 
-- Review `STORE-LISTING.md` and replace the Marketplace support contact as required in the publisher portal.
+- Use `https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/issues` as the support page in the Marketplace submission form.
 - Publish `PRIVACY.md` at the URL stated in the listing before submission.
 - Upload the 120 × 120 transparent icon and any requested screenshots.
 - Use the generated `LayerRenamer-2.0.0-Autodesk-Marketplace.zip` as the app package.
 - Digitally sign release binaries if required by the publisher workflow.
 - Confirm the ProductCode remains unique and the UpgradeCode remains stable for future updates.
 - Verify all claimed AutoCAD versions match the tested package before submitting.
+- Select only vanilla AutoCAD versions that were actually tested; do not claim AutoCAD vertical products without separate testing.

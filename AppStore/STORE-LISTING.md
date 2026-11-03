@@ -26,7 +26,11 @@ Close AutoCAD. Open **Windows Settings > Apps > Installed apps**, locate **Layer
 
 ## Support information
 
-For product support, usage questions, or defect reports, use the support contact or support link on this Autodesk Marketplace listing. Include the AutoCAD version, Layer Renamer version, a description of the issue, and reproducible steps. Do not include confidential drawings or layer information unless specifically required and appropriately sanitized.
+For product support, usage questions, or defect reports, use the Layer Renamer support page:
+
+https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/issues
+
+Include the AutoCAD version, Layer Renamer version, a description of the issue, and reproducible steps. Do not include confidential drawings or layer information unless specifically required and appropriately sanitized.
 
 ## Additional information and known issues
 

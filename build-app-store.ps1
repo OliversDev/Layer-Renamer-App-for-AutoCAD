@@ -4,6 +4,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
 $repositoryRoot = $PSScriptRoot
 $project = Join-Path $repositoryRoot "Layer Renamer App for AutoCAD\Layer Renamer App for AutoCAD.csproj"
 $bundleTemplate = Join-Path $repositoryRoot "AppStore\LayerRenamer.bundle"
@@ -26,8 +27,30 @@ function Assert-AutoCADApi {
     }
 }
 
+function Assert-DotNetSdk {
+    param([string]$MajorVersion)
+
+    $installedSdks = @(& dotnet --list-sdks 2>$null)
+    if ($LASTEXITCODE -ne 0 -or -not ($installedSdks | Where-Object { $_ -match "^$([regex]::Escape($MajorVersion))\." })) {
+        throw ".NET $MajorVersion SDK is required. Install it, reopen this CMD window, and run the BAT again."
+    }
+}
+
+if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+    throw "The dotnet command was not found. Install the .NET 8 and .NET 10 SDKs."
+}
+
+Assert-DotNetSdk -MajorVersion "8"
+Assert-DotNetSdk -MajorVersion "10"
+
 Assert-AutoCADApi -Version "2026" -Directory $AutoCAD2026Dir
 Assert-AutoCADApi -Version "2027" -Directory $AutoCAD2027Dir
+
+$storeListing = Join-Path $repositoryRoot "AppStore\STORE-LISTING.md"
+if (-not (Test-Path -LiteralPath $storeListing -PathType Leaf) -or
+    (Get-Content -LiteralPath $storeListing -Raw) -notmatch [regex]::Escape("https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/issues")) {
+    throw "STORE-LISTING.md must contain the explicit Layer Renamer support page."
+}
 
 if (-not (Test-Path -LiteralPath (Join-Path $bundleTemplate "PackageContents.xml") -PathType Leaf)) {
     throw "The bundle template is incomplete: '$bundleTemplate'."
@@ -61,6 +84,9 @@ if ($LASTEXITCODE -ne 0) {
 
 foreach ($version in @("2026", "2027")) {
     $sourceDll = Join-Path $repositoryRoot "Layer Renamer App for AutoCAD\bin\Release\AutoCAD$version\Layer Renamer App for AutoCAD.dll"
+    if (-not (Test-Path -LiteralPath $sourceDll -PathType Leaf)) {
+        throw "The AutoCAD $version build did not produce the expected DLL: '$sourceDll'."
+    }
     $destinationDir = Join-Path $bundle "Contents\$version"
     New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     Copy-Item -LiteralPath $sourceDll -Destination (Join-Path $destinationDir "Layer Renamer App for AutoCAD.dll") -Force
@@ -128,7 +154,23 @@ if ($null -ne $macroNode.SelectSingleNode("CLICommand") -or
 
 [xml]$manifestDefinition = Get-Content -LiteralPath (Join-Path $bundle "PackageContents.xml") -Raw
 $componentSets = @($manifestDefinition.ApplicationPackage.Components)
+if ($componentSets.Count -ne 2) {
+    throw "PackageContents.xml must contain exactly the AutoCAD 2026 and AutoCAD 2027 component sets."
+}
+
+$expectedSeries = @{
+    "AutoCAD 2026" = "R25.1"
+    "AutoCAD 2027" = "R26.0"
+}
 foreach ($componentSet in $componentSets) {
+    if (-not $expectedSeries.ContainsKey([string]$componentSet.Description)) {
+        throw "Unexpected component set in PackageContents.xml: '$($componentSet.Description)'."
+    }
+    $expected = $expectedSeries[[string]$componentSet.Description]
+    if ($componentSet.RuntimeRequirements.SeriesMin -ne $expected -or
+        $componentSet.RuntimeRequirements.SeriesMax -ne $expected) {
+        throw "$($componentSet.Description) must use SeriesMin and SeriesMax '$expected'."
+    }
     if ($componentSet.RuntimeRequirements.SupportPath -ne "./Contents/Help") {
         throw "Every supported AutoCAD version must register ./Contents/Help as a support path."
     }
@@ -190,6 +232,26 @@ Copy-Item `
     -Destination (Join-Path $helpDir "THIRD-PARTY-NOTICES.txt") `
     -Force
 
+$requiredBundleFiles = @(
+    "PackageContents.xml",
+    "Contents\2026\Layer Renamer App for AutoCAD.dll",
+    "Contents\2027\Layer Renamer App for AutoCAD.dll",
+    "Contents\Resources\LayerRenamer.cuix",
+    "Contents\Resources\LayerRenamer.ico",
+    "Contents\Help\LayerRenamer.html",
+    "Contents\Help\index.html",
+    "Contents\Help\privacy.html",
+    "Contents\Help\license.html",
+    "Contents\Help\THIRD-PARTY-NOTICES.txt"
+)
+
+foreach ($relativePath in $requiredBundleFiles) {
+    $requiredBundleFile = Join-Path $bundle $relativePath
+    if (-not (Test-Path -LiteralPath $requiredBundleFile -PathType Leaf)) {
+        throw "The Marketplace bundle is missing required file: '$relativePath'."
+    }
+}
+
 [xml](Get-Content -LiteralPath (Join-Path $bundle "PackageContents.xml") -Raw) | Out-Null
 
 if (Test-Path -LiteralPath $outputZip) {
@@ -197,4 +259,22 @@ if (Test-Path -LiteralPath $outputZip) {
 }
 
 Compress-Archive -Path $bundle -DestinationPath $outputZip -CompressionLevel Optimal
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$archive = [IO.Compression.ZipFile]::OpenRead($outputZip)
+try {
+    $archiveNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace('/', '\') })
+    foreach ($relativePath in $requiredBundleFiles) {
+        $archivePath = "LayerRenamer.bundle\$relativePath"
+        if ($archiveNames -notcontains $archivePath) {
+            throw "The generated Marketplace ZIP is missing: '$archivePath'."
+        }
+    }
+}
+finally {
+    $archive.Dispose()
+}
+
+$zipHash = (Get-FileHash -LiteralPath $outputZip -Algorithm SHA256).Hash
 Write-Host "Created $outputZip"
+Write-Host "SHA256 $zipHash"

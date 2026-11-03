@@ -29,7 +29,7 @@ The Autodesk Design and Make Marketplace installer registers the application aut
 For local bundle testing, copy `LayerRenamer.bundle` to:
 
 ```text
-C:\Program Files\Autodesk\ApplicationPlugins
+%APPDATA%\Autodesk\ApplicationPlugins
 ```
 
 Restart AutoCAD. Open the standard **Add-ins** ribbon tab and select **Layer Renamer**, or enter:
@@ -63,7 +63,7 @@ Layer Renamer does not collect or transmit personal information, drawing informa
 
 The solution builds AutoCAD 2026 with .NET 8 and AutoCAD 2027 with .NET 10. Install the corresponding .NET SDKs and AutoCAD managed APIs, then run from a PowerShell developer prompt:
 
-The AutoCAD 2027 target imports the .NET 10 WPF reference set because Autodesk's managed API depends on its `WindowsBase` assembly. The application itself continues to use Windows Forms.
+Both targets import the matching Windows Desktop WPF reference set because the AutoCAD 2026 and AutoCAD 2027 managed APIs depend on their corresponding `WindowsBase` assemblies. The application itself continues to use Windows Forms.
 
 ```powershell
 .\build-app-store.ps1
@@ -79,7 +79,11 @@ If AutoCAD is installed elsewhere, pass `-AutoCAD2026Dir` and `-AutoCAD2027Dir`.
 
 Marketplace artwork is maintained under `AppStore\Assets`, including exact 100, 120, and 1024 pixel transparent PNG files, a multi-resolution ICO, and editable SVG sources. The ribbon has separate 16 and 32 pixel assets.
 
-For the normal AutoCAD 2026 development loop, run `Apply-Build-Install-Layer-Renamer-2026.bat` from the update package. It applies the current App Store files to the repository, builds only `net8.0-windows`, stages a complete test bundle, and installs it to `C:\Program Files\Autodesk\ApplicationPlugins\LayerRenamer.bundle`. AutoCAD must be closed and Windows elevation is required.
+For the final dual-version development loop, run `Apply-Build-Install-Layer-Renamer-2026-2027.bat` from the update package. It applies the current Marketplace files, builds both targets, creates the final submission ZIP, and installs the complete test bundle beside Batch Scripter at `%APPDATA%\Autodesk\ApplicationPlugins\LayerRenamer.bundle`. AutoCAD must be closed and Windows elevation is required.
+
+## Support
+
+Report product issues at [Layer Renamer support](https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/issues). Do not attach confidential drawings or layer information.
 
 ## License and third-party notices
 

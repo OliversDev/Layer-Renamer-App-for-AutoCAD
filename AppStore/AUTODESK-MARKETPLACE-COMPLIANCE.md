@@ -26,12 +26,13 @@ Layer Renamer implements the Autodesk Marketplace packaging, ribbon, help, priva
 ## Build safeguards
 
 - `build-app-store.ps1` validates API installations, ribbon merge settings, contextual help, manifest support paths, command registration, and app-specific help before producing the dual-version submission ZIP.
-- `Apply-Build-Install-Layer-Renamer-2026.bat` provides a repeatable AutoCAD 2026 update/build/install test loop that directly replaces the update files and installed test bundle.
+- `Apply-Build-Install-Layer-Renamer-2026-2027.bat` provides a repeatable dual-version update/build/package/install test loop that directly replaces the update files and installed test bundle.
+- The local test bundle is installed under `%APPDATA%\Autodesk\ApplicationPlugins`, matching the user-level location actively discovered by AutoCAD 2027 and used by Batch Scripter. Obsolete Program Files and ProgramData test copies are removed.
 - The release checklist includes clean-profile testing, ribbon placement, contextual F1, supported versions, theme/scaling, rename behavior, links, privacy publication, artwork, package integrity, and stable identifiers.
 
 ## Final publisher actions
 
-- Replace the listing's generic support route with the final Marketplace support contact.
+- Use the public GitHub Issues page as the explicit product-support route.
 - Publish the privacy policy at the URL used in the Marketplace portal.
 - When Autodesk assigns a Layer Renamer Marketplace app ID or exact HelpDoc URL, update the ribbon `HelpSource` to that Autodesk URL and repeat the F1 acceptance test.
 - Build and test both targets on Windows with AutoCAD 2026 and 2027 before submission.

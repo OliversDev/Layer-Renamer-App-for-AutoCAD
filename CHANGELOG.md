@@ -16,4 +16,4 @@
 - Added the two-layer LR application, Marketplace, ribbon, and Windows icon family.
 - Added Marketplace bundle generation, Help, privacy, license, third-party notices, and store-listing content.
 - Cleaned duplicate project images, unused designer metadata, and missing optional resource dependencies.
-- Enabled the matching WPF reference set only for the AutoCAD 2027/.NET 10 target to resolve the `WindowsBase` MSB3277 assembly conflict; the application UI remains WinForms.
+- Enabled the matching Windows Desktop WPF reference sets for both AutoCAD targets to resolve `WindowsBase` assembly conflicts; the application UI remains WinForms.
