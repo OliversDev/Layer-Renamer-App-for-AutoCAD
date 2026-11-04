@@ -1,4 +1,4 @@
-Layer Renamer License
+Renamer License
 
 Copyright (c) 2024-2026 Oliver Wackenreuther
 

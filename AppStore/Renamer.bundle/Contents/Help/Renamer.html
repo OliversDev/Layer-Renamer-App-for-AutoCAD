@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Renamer Help</title>
+  <style>
+    body { max-width: 900px; margin: 40px auto; padding: 0 24px; font: 16px/1.55 "Segoe UI", sans-serif; color: #202020; }
+    h1, h2 { color: #002147; } code { font-family: Consolas, monospace; }
+    .note { padding: 12px 14px; background: #eef6fc; border: 1px solid #b8d9f2; }
+  </style>
+</head>
+<body id="renamer">
+  <h1>Renamer for AutoCAD</h1>
+  <p>Renamer batch-renames layers, blocks, dimension styles, linetypes, table styles, and text styles through one reviewable script.</p>
+
+  <h2>Start</h2>
+  <p>Open AutoCAD's standard <strong>Add-ins</strong> tab and select <strong>Renamer</strong>, or enter <code>OW:Renamer</code>.</p>
+
+  <h2>Rename objects</h2>
+  <ol>
+    <li>Choose an object-category tab and select one or more rows. Ctrl and Shift support multiple selection.</li>
+    <li>Optionally filter the tab. Filtering is exact by default; use <code>*</code> as a wildcard. Each tab preserves its own filter and selection.</li>
+    <li>Enter a prefix, suffix, or optional <strong>Find</strong> and <strong>Replace</strong> values.</li>
+    <li>To assign an exact name, select one object and use <strong>Rename To (single object)</strong>. This overrides the other rename options.</li>
+    <li>Select <strong>Add To Script List</strong>. Switch categories and repeat as needed.</li>
+    <li>Review or edit the combined script. Copy, save, clear, or select <strong>Rename</strong> to run it. Lines beginning with <code>;</code> are comments.</li>
+  </ol>
+
+  <div class="note">Protected, reserved, anonymous, layout, and externally dependent records are not offered. Renamer validates generated names and checks conflicts within each object category. Manually entered lines run as written and remain the user's responsibility to review.</div>
+
+  <h2>Generated commands</h2>
+  <p>Renamer creates localized AutoCAD <code>-RENAME</code> commands for the selected category. Objects in different categories may use the same name. Before execution, Renamer warns only when the same source is repeated or multiple targets collide within the same category.</p>
+
+  <h2>Data and files</h2>
+  <p>Drawing information is processed locally. Renamer does not automatically save the drawing or create logs. <strong>Save Script</strong> writes only to the location selected by the user.</p>
+
+  <h2>Support and legal</h2>
+  <p><a href="https://github.com/OliversDev/Renamer-App-for-AutoCAD/issues">Support and issue reporting</a></p>
+  <p><a href="https://github.com/OliversDev/Renamer-App-for-AutoCAD">Project page</a></p>
+  <p><a href="privacy.html">Privacy policy</a></p>
+  <p><a href="license.html">License and risk disclaimer</a></p>
+  <p><a href="THIRD-PARTY-NOTICES.txt">Third-party notices</a></p>
+  <p>Autodesk and AutoCAD are registered trademarks of Autodesk, Inc. This application is not affiliated with, endorsed by, sponsored by, or supported by Autodesk, Inc.</p>
+</body>
+</html>

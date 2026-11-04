@@ -1,38 +1,32 @@
-# Layer Renamer Autodesk Marketplace compliance
-
-Layer Renamer implements the Autodesk Marketplace packaging, ribbon, help, privacy, licensing, listing, artwork, build, and release requirements with product-specific names, commands, identifiers, help, and artwork.
+# Renamer Autodesk Marketplace compliance
 
 ## Package and compatibility
 
-- Unique `ProductCode`, stable `UpgradeCode`, namespace, publisher, version, icon, local help, and online documentation are declared in `PackageContents.xml`.
-- AutoCAD 2026 uses the .NET 8 build and AutoCAD 2027 uses the .NET 10 build.
-- Each version has an exact `RuntimeRequirements` series range and registers the bundled Help directory.
-- `OW:LayerRenamer` is demand-loaded and mapped to the `#layerrenamer` help topic.
+- Product name, namespace, product/upgrade codes, assembly, bundle, command, help, CUIX, icon, and documentation use Renamer identifiers.
+- AutoCAD 2026 uses .NET 8 and exact series `R25.1`; AutoCAD 2027 uses .NET 10 and exact series `R26.0`.
+- `OW:Renamer` is demand-loaded and mapped to local contextual F1 help.
 
-## AutoCAD user experience
+## User experience
 
-- The partial CUIX uses `ID_ADDINSTAB` as both its tab element ID and alias, then merges the Layer Renamer panel into AutoCAD's built-in Add-ins tab using `AddToWorkspace` and `MergeTabOnly`.
-- No separate product ribbon tab is created.
-- The ribbon button includes 16 px and 32 px images, a clean tooltip without the command-name line, and enabled contextual F1 help.
-- Bundled HTML Help, Privacy, License/risk disclaimer, and third-party notices are available offline.
+- The partial CUIX merges only into `ID_ADDINSTAB` using `AddToWorkspace` and `MergeTabOnly`.
+- No custom ribbon tab is created and no command name is injected into the tooltip.
+- Bundled Help, Privacy, License, and third-party notices work offline.
+- Six object tabs share one consistent selection, filtering, rename, validation, script, and execution workflow.
 
-## Marketplace content
+## Privacy and dependencies
 
-- Store description, usage, installation, uninstallation, support, commands, privacy statement, limitations, and artwork inventory are maintained in `STORE-LISTING.md`.
-- Transparent 100 px, 120 px, and 1024 px artwork, editable SVG sources, a multi-resolution ICO, and ribbon images are provided.
-- The privacy policy states what the application reads, what it stores, what it does not collect or transmit, optional external links, support communications, retention, security, changes, and contact route.
-- The HTML license explains drawing-modification risks, backups, user validation duties, warranty exclusions, liability limitations, and MIT terms.
+- Processing is local; no telemetry, analytics, cloud processing, advertising, tracking, or application logs are used.
+- No third-party executable DLL is included. Runtime dependencies are Autodesk's managed AutoCAD API, Microsoft .NET, and Windows system libraries used for UI theming.
+- The application reads the Windows app-theme registry value but does not create, change, or delete registry values.
 
 ## Build safeguards
 
-- `build-app-store.ps1` validates API installations, ribbon merge settings, contextual help, manifest support paths, command registration, and app-specific help before producing the dual-version submission ZIP.
-- `Apply-Build-Install-Layer-Renamer-2026-2027.bat` provides a repeatable dual-version update/build/package/install test loop that directly replaces the update files and installed test bundle.
-- The local test bundle is installed under `%APPDATA%\Autodesk\ApplicationPlugins`, matching the user-level location actively discovered by AutoCAD 2027 and used by Batch Scripter. Obsolete Program Files and ProgramData test copies are removed.
-- The release checklist includes clean-profile testing, ribbon placement, contextual F1, supported versions, theme/scaling, rename behavior, links, privacy publication, artwork, package integrity, and stable identifiers.
+- `build-app-store.ps1` validates both AutoCAD API installations, ribbon merge and F1 configuration, manifest ranges, command registration, required files, and final archive contents.
+- `Apply-Build-Install-Renamer-2026-2027.bat` renames the repository folder, replaces source files without backups, builds both targets, removes obsolete bundles, installs the current user-level test bundle, verifies hashes, and preserves all output in a visible CMD window.
 
-## Final publisher actions
+## Publisher actions
 
-- Use the public GitHub Issues page as the explicit product-support route.
-- Publish the privacy policy at the URL used in the Marketplace portal.
-- When Autodesk assigns a Layer Renamer Marketplace app ID or exact HelpDoc URL, update the ribbon `HelpSource` to that Autodesk URL and repeat the F1 acceptance test.
-- Build and test both targets on Windows with AutoCAD 2026 and 2027 before submission.
+- Rename the GitHub repository to `Renamer App for AutoCAD` so its URL becomes `Renamer-App-for-AutoCAD`.
+- Publish the privacy policy and support page before submission.
+- Add the publisher support email required by the Marketplace portal/manifest when the final support address is chosen.
+- Test both supported AutoCAD versions and contextual F1 help before submission.

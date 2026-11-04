@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Renamer icon</title>
+  <rect x="112" y="112" width="800" height="800" rx="155" fill="#4ba9e6"/>
+  <text x="512" y="490" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="430" font-weight="700" fill="#ffffff">R</text>
+  <path d="M248 720H650L590 660M650 720L590 780" fill="none" stroke="#ffffff" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M776 820H374L434 760M374 820L434 880" fill="none" stroke="#737373" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

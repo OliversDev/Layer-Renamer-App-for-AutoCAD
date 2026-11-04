@@ -2,32 +2,28 @@
 
 ## Build and package
 
-- Install the .NET 8 and .NET 10 SDKs.
-- Confirm AutoCAD 2026 and AutoCAD 2027 managed API files are installed.
-- Run `Apply-Build-Install-Layer-Renamer-2026-2027.bat` from the update package, or run `build-app-store.ps1` from the repository root.
-- Confirm both release DLLs and the generated CUIX are present in `AppStore\artifacts\LayerRenamer.bundle`.
-- Confirm the generated Marketplace ZIP opens without archive errors.
+- Close AutoCAD 2026 and 2027.
+- Install the .NET 8 and .NET 10 SDKs and both AutoCAD managed API sets.
+- Run `Apply-Build-Install-Renamer-2026-2027.bat`.
+- Confirm `AppStore\artifacts\Renamer-1.0.0-Autodesk-Marketplace.zip` opens correctly.
 
 ## Functional testing
 
-- Test AutoCAD 2026 and AutoCAD 2027 on clean Windows profiles.
-- Confirm the Layer Renamer panel merges into AutoCAD's standard Add-ins tab and no separate Layer Renamer tab is created.
-- Before opening the app, hover over its ribbon button and press F1; confirm the bundled Layer Renamer help opens.
-- Test the Add-ins ribbon button and `OW:LayerRenamer` command.
-- Test Windows light, dark, and high-contrast modes at 100%, 125%, and 150% display scaling.
-- Test partial filtering, `*` wildcards, Ctrl/Shift selection, and selection persistence.
-- Test prefix, suffix, find/replace, exact-name rename, exact and `*` wildcard filtering, persistent selection, manual script editing, comment handling, duplicate destination warnings, repeated source warnings, copy, save, confirmation, and AutoCAD undo.
-- Verify rejection of invalid, empty, duplicate, conflicting, and over-length names.
-- Verify layer 0, Defpoints, and dependent xref layers cannot be selected.
-- Verify contextual F1 Help plus the License, Privacy, GitHub, and LinkedIn links.
+- Confirm the Renamer panel appears only on AutoCAD's standard Add-ins tab.
+- Hover over the ribbon button and press F1; confirm Renamer help opens.
+- Test the ribbon button and `OW:Renamer` in AutoCAD 2026 and 2027.
+- Test all tabs: Layers, Blocks, Dimension Styles, Linetypes, Table Styles, and Text Styles.
+- Test exact and `*` filters, independent tab selections, prefix, suffix, find/replace, exact single-object naming, mixed-category staging, manual edits, comments, copy, save, clear, execution, and Undo.
+- Verify same-category collision warnings do not incorrectly flag identical names in different categories.
+- Verify layer `0`, Defpoints, reserved linetypes, layout/anonymous blocks, and dependent xref records are excluded.
+- Test Windows light/dark themes and 100%, 125%, and 150% scaling.
+- Verify Help, License, Privacy, GitHub, and LinkedIn links.
 
-## Submission content
+## Submission
 
-- Use `https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/issues` as the support page in the Marketplace submission form.
-- Publish `PRIVACY.md` at the URL stated in the listing before submission.
-- Upload the 120 × 120 transparent icon and any requested screenshots.
-- Use the generated `LayerRenamer-2.0.0-Autodesk-Marketplace.zip` as the app package.
-- Digitally sign release binaries if required by the publisher workflow.
-- Confirm the ProductCode remains unique and the UpgradeCode remains stable for future updates.
-- Verify all claimed AutoCAD versions match the tested package before submitting.
-- Select only vanilla AutoCAD versions that were actually tested; do not claim AutoCAD vertical products without separate testing.
+- Rename the GitHub repository and confirm all new URLs resolve.
+- Publish `PRIVACY.md` and enable the GitHub Issues support page.
+- Add the final publisher support email to `CompanyDetails` and the Marketplace form.
+- Upload the 120 × 120 icon and requested screenshots.
+- Submit `Renamer-1.0.0-Autodesk-Marketplace.zip`.
+- Keep the UpgradeCode stable for future updates.

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0"
+                    AutodeskProduct="AutoCAD"
+                    ProductType="Application"
+                    Name="Renamer"
+                    Description="Batch rename layers, blocks, dimension styles, linetypes, table styles, and text styles."
+                    AppVersion="1.0.0"
+                    FriendlyVersion="1.0.0"
+                    Author="Oliver Wackenreuther"
+                    AppNameSpace="com.oliversdev.renamer"
+                    ProductCode="{41B804AF-A59E-465B-9F42-C4528DE01251}"
+                    UpgradeCode="{54AB8241-B48B-471C-9B1E-491AC508CB42}"
+                    Icon="./Contents/Resources/Renamer.ico"
+                    Helpfile="./Contents/Help/Renamer.html"
+                    OnlineDocumentation="https://github.com/OliversDev/Renamer-App-for-AutoCAD">
+  <CompanyDetails Name="Oliver Wackenreuther"
+                  Url="https://github.com/OliversDev" />
+
+  <Components Description="AutoCAD 2026">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R25.1" SeriesMax="R25.1" SupportPath="./Contents/Help" />
+    <ComponentEntry AppName="Renamer Ribbon 2026"
+                    ModuleName="./Contents/Resources/Renamer.cuix"
+                    AppDescription="Renamer ribbon panel for AutoCAD 2026"
+                    LoadOnAutoCADStartup="True" />
+    <ComponentEntry AppName="Renamer 2026"
+                    ModuleName="./Contents/2026/Renamer App for AutoCAD.dll"
+                    AppDescription="Renamer for AutoCAD 2026"
+                    LoadOnCommandInvocation="True">
+      <Commands GroupName="Renamer">
+        <Command Global="OW:Renamer" Local="OW:Renamer" HelpTopic="#renamer" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+
+  <Components Description="AutoCAD 2027">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R26.0" SeriesMax="R26.0" SupportPath="./Contents/Help" />
+    <ComponentEntry AppName="Renamer Ribbon 2027"
+                    ModuleName="./Contents/Resources/Renamer.cuix"
+                    AppDescription="Renamer ribbon panel for AutoCAD 2027"
+                    LoadOnAutoCADStartup="True" />
+    <ComponentEntry AppName="Renamer 2027"
+                    ModuleName="./Contents/2027/Renamer App for AutoCAD.dll"
+                    AppDescription="Renamer for AutoCAD 2027"
+                    LoadOnCommandInvocation="True">
+      <Commands GroupName="Renamer">
+        <Command Global="OW:Renamer" Local="OW:Renamer" HelpTopic="#renamer" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+</ApplicationPackage>

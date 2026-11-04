@@ -1,90 +1,62 @@
-# Layer Renamer for AutoCAD
+# Renamer for AutoCAD
 
-Layer Renamer is a focused AutoCAD add-in for renaming drawing layers through generated or manually edited AutoCAD script commands. It supports prefix, suffix, find-and-replace, and exact-name methods with validation before generated commands are added.
+Renamer is an AutoCAD add-in for batch-renaming named drawing objects through a common, reviewable workflow.
+
+## Supported objects
+
+- Layers
+- Blocks
+- Dimension styles
+- Linetypes
+- Table styles
+- Text styles
 
 ## Features
 
-- Rename multiple selected layers in one operation.
-- Add a prefix, suffix, or both.
-- Find and replace text without requiring another option to be enabled.
-- Rename one selected layer directly to an exact name.
-- Filter layers by exact name or `*` wildcard patterns while preserving selection.
-- Prevent empty names, invalid characters, names longer than 255 characters, duplicate results, and collisions with existing layers.
-- Build an editable script with one direct AutoCAD rename command per selected layer.
-- Enter or revise script commands manually before running them.
-- Warn before running when active layer-rename commands reuse a destination name or rename the same source layer more than once.
-- Copy or save the generated script, or run it in the active drawing.
-- Exclude layer `0`, `Defpoints`, and externally dependent layers.
-- Display layer colour, linetype, frozen state, locked state, and lineweight.
+- Switch object categories using tabs while keeping separate selections and filters for each category.
+- Rename selected objects with a prefix, suffix, case-insensitive find/replace, or an exact name for one object.
+- Filter by exact name or `*` wildcard patterns while preserving selection.
+- Reject empty, invalid, over-length, duplicate, and conflicting generated names.
+- Exclude protected, anonymous, layout, xref-dependent, and other non-renamable AutoCAD records.
+- Build one editable script containing commands from multiple object categories.
+- Warn when the same source is renamed more than once or same-category targets collide.
+- Copy, save, clear, manually edit, or run the script in the active drawing.
 - Follow the Windows light or dark application theme.
 
 ## Requirements
 
-- AutoCAD 2026 or AutoCAD 2027 for Windows, 64-bit
+- AutoCAD 2026 or AutoCAD 2027 for 64-bit Windows
+- .NET 8 runtime supplied for AutoCAD 2026
+- .NET 10 runtime supplied for AutoCAD 2027
 
-## Installation
+## Installation and use
 
-The Autodesk Design and Make Marketplace installer registers the application automatically.
+The Autodesk Design and Make Marketplace installer registers the application automatically. For local testing, copy `Renamer.bundle` to `%APPDATA%\Autodesk\ApplicationPlugins`, restart AutoCAD, and open **Renamer** from the standard **Add-ins** ribbon tab or enter `OW:Renamer`.
 
-For local bundle testing, copy `LayerRenamer.bundle` to:
+1. Choose an object-category tab.
+2. Select one or more objects.
+3. Enter a prefix, suffix, or optional **Find** and **Replace** values. To set an exact name, select one object and use **Rename To (single object)**.
+4. Select **Add To Script List**. Switch tabs and repeat as required.
+5. Review or edit the combined script, then copy, save, or run it. Lines beginning with `;` are comments.
 
-```text
-%APPDATA%\Autodesk\ApplicationPlugins
-```
+Renaming uses AutoCAD's standard `-RENAME` command and remains available to AutoCAD's normal Undo workflow while the drawing is open. Manually entered script lines run as written and should be reviewed carefully.
 
-Restart AutoCAD. Open the standard **Add-ins** ribbon tab and select **Layer Renamer**, or enter:
+## Development and packaging
 
-```text
-OW:LayerRenamer
-```
-
-## Usage
-
-1. Select one or more layers in the grid.
-2. Enter a prefix and/or suffix, or optionally enter **Find** and **Replace** text.
-3. To assign an exact name, select one layer and enter the result in **Rename To (single layer)**. This overrides the other rename fields.
-4. Select **Add To Script List** and repeat for other layer selections as needed.
-5. Review or manually edit the script.
-6. Copy or save the script, or select **Rename** and confirm to run it. Lines beginning with `;` are treated as comments. Unrelated manual commands are not included in the layer-conflict analysis.
-
-Before execution, Layer Renamer examines active commands that match its generated layer-rename format. If multiple source layers use the same destination name, or one source layer is renamed more than once, the app warns that the script may fail and lets the user cancel or continue.
-
-Each rename command can be reversed through AutoCAD's normal undo workflow while the drawing remains open. Maintain current backups and review the preview before renaming production drawings.
-
-## Uninstallation
-
-Use **Settings > Apps > Installed apps** in Windows, select **Layer Renamer**, and choose **Uninstall**. For a manually installed test bundle, close AutoCAD and remove `LayerRenamer.bundle` from the Autodesk `ApplicationPlugins` folder.
-
-## Privacy
-
-Layer Renamer does not collect or transmit personal information, drawing information, layer names, or usage analytics. Processing occurs locally. See [PRIVACY.md](PRIVACY.md).
-
-## Development and Marketplace packaging
-
-The solution builds AutoCAD 2026 with .NET 8 and AutoCAD 2027 with .NET 10. Install the corresponding .NET SDKs and AutoCAD managed APIs, then run from a PowerShell developer prompt:
-
-Both targets import the matching Windows Desktop WPF reference set because the AutoCAD 2026 and AutoCAD 2027 managed APIs depend on their corresponding `WindowsBase` assemblies. The application itself continues to use Windows Forms.
-
-```powershell
-.\build-app-store.ps1
-```
-
-The script validates both AutoCAD API installations, builds release-specific DLLs, creates and validates the partial CUIX ribbon, stages the complete bundle, copies Help/License/Privacy resources, and writes:
+The solution builds AutoCAD 2026 with .NET 8 and AutoCAD 2027 with .NET 10. Run `build-app-store.ps1` to validate, build, stage, and create:
 
 ```text
-AppStore\artifacts\LayerRenamer-2.0.0-Autodesk-Marketplace.zip
+AppStore\artifacts\Renamer-1.0.0-Autodesk-Marketplace.zip
 ```
 
-If AutoCAD is installed elsewhere, pass `-AutoCAD2026Dir` and `-AutoCAD2027Dir`. If the source was downloaded as a ZIP, unblock it in Windows before extracting or use `Unblock-File` on a trusted extracted copy.
+The update package includes `Apply-Build-Install-Renamer-2026-2027.bat`. It renames the local repository folder, replaces the source files without creating backups, builds both targets, removes old Renamer and former product bundles, installs `%APPDATA%\Autodesk\ApplicationPlugins\Renamer.bundle`, and leaves the CMD window open with the result.
 
-Marketplace artwork is maintained under `AppStore\Assets`, including exact 100, 120, and 1024 pixel transparent PNG files, a multi-resolution ICO, and editable SVG sources. The ribbon has separate 16 and 32 pixel assets.
+## Privacy and support
 
-For the final dual-version development loop, run `Apply-Build-Install-Layer-Renamer-2026-2027.bat` from the update package. It applies the current Marketplace files, builds both targets, creates the final submission ZIP, and installs the complete test bundle beside Batch Scripter at `%APPDATA%\Autodesk\ApplicationPlugins\LayerRenamer.bundle`. AutoCAD must be closed and Windows elevation is required.
+Renamer does not collect or transmit drawing information, object names, personal information, telemetry, or analytics. See [PRIVACY.md](PRIVACY.md).
 
-## Support
+Report issues at [Renamer support](https://github.com/OliversDev/Renamer-App-for-AutoCAD/issues). Do not attach confidential drawings or object names.
 
-Report product issues at [Layer Renamer support](https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/issues). Do not attach confidential drawings or layer information.
+## License
 
-## License and third-party notices
-
-See [LICENSE.html](LICENSE.html) for the risk disclaimer and MIT terms. The application includes licensed Dazzle icon assets; see [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+See [LICENSE.html](LICENSE.html) and [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

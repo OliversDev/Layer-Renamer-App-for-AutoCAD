@@ -1,56 +1,54 @@
-# Layer Renamer for AutoCAD
+# Renamer for AutoCAD
 
 ## Short description
 
-Build, review, and run AutoCAD layer rename scripts using flexible naming rules.
+Batch rename layers, blocks, dimension styles, linetypes, table styles, and text styles.
 
 ## Description
 
-Layer Renamer is a focused AutoCAD productivity tool for renaming drawing layers. Select layers and apply a prefix, suffix, find-and-replace rule, or an exact name for one selected layer. Generated commands are added to an editable script for review.
+Renamer provides one consistent workflow for renaming six types of named AutoCAD drawing objects. Choose a category tab, select objects, and apply a prefix, suffix, case-insensitive find-and-replace rule, or an exact name for one selected object. Add commands from multiple categories to one editable script and review everything before execution.
 
-The app checks every generated name before adding it to the script. It prevents invalid characters, empty names, names longer than AutoCAD's limit, duplicate results, and conflicts with existing layers. Before running, it warns about active rename commands that reuse a destination name or rename the same source layer more than once, while ignoring commented and unrelated script lines. The user can cancel or continue. Selections are preserved while filtering, and the script can be manually edited, copied, saved, or run in the active drawing.
+Generated names are checked for invalid characters, empty or over-length values, duplicate results, and collisions with existing objects in the same category. Protected and externally dependent records are not offered. Before running, Renamer warns about same-category duplicate destinations and repeated source objects while ignoring comments and unrelated manual lines.
 
-The interface follows the Windows light or dark application theme and keeps the workflow intentionally simple.
+## General usage
 
-## General usage instructions
+Open **Renamer** from AutoCAD's standard **Add-ins** ribbon tab or enter `OW:Renamer`. Select a category tab, choose objects, enter rename options, and select **Add To Script List**. Repeat across other categories, review or edit the script, then copy, save, or select **Rename**. Use **Rename To (single object)** when exactly one object is selected.
 
-Open **Layer Renamer** from AutoCAD's standard **Add-ins** ribbon tab or enter `OW:LayerRenamer`. Select layers in the grid and enter a prefix, suffix, or optional **Find** and **Replace** text. To rename one layer to any exact string, use **Rename To (single layer)**. Select **Add To Script List**, repeat as needed, and review or manually edit the script. Copy, save, or select **Rename** to run it. Layer 0, Defpoints, and externally dependent layers are excluded.
+Manually entered script lines run as written. Review them before execution.
 
 ## Installation
 
-Download and run the installer from the Autodesk Design and Make Marketplace. The installer registers Layer Renamer for supported AutoCAD versions. Restart AutoCAD after installation. Open the standard **Add-ins** tab and select **Layer Renamer**, or enter `OW:LayerRenamer` at the command line.
+Download and run the Autodesk Design and Make Marketplace installer. Restart AutoCAD, open **Add-ins**, and select **Renamer**, or enter `OW:Renamer`.
 
 ## Uninstallation
 
-Close AutoCAD. Open **Windows Settings > Apps > Installed apps**, locate **Layer Renamer**, select the available options menu, and choose **Uninstall**. Follow the Windows prompts. Restart AutoCAD if it was open during removal.
+Close AutoCAD. Open **Windows Settings > Apps > Installed apps**, select **Renamer**, and choose **Uninstall**.
 
-## Support information
+## Support
 
-For product support, usage questions, or defect reports, use the Layer Renamer support page:
+https://github.com/OliversDev/Renamer-App-for-AutoCAD/issues
 
-https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/issues
+Include the AutoCAD version, Renamer version, reproducible steps, and any displayed error. Do not include confidential drawings or object names.
 
-Include the AutoCAD version, Layer Renamer version, a description of the issue, and reproducible steps. Do not include confidential drawings or layer information unless specifically required and appropriately sanitized.
+## Compatibility and limitations
 
-## Additional information and known issues
-
-Layer Renamer supports AutoCAD 2026 and AutoCAD 2027 on 64-bit Windows. It does not rename layer 0, Defpoints, or externally dependent layers. AutoCAD prevents some layer changes based on drawing state or object dependencies. Always maintain current drawing backups and review the generated or manually edited script before renaming production layers. No known unresolved application defects are included with version 2.0.0.
+Renamer supports 64-bit AutoCAD 2026 and AutoCAD 2027. AutoCAD may reject a rename based on drawing state or dependencies. Anonymous blocks, layout blocks, xref-dependent records, layer `0`, `Defpoints`, and reserved linetypes are excluded. Maintain current drawing backups and review scripts before production use.
 
 ## Commands
 
-- `OW:LayerRenamer` — opens Layer Renamer.
+- `OW:Renamer` — opens Renamer.
 
 ## Privacy
 
-Layer Renamer does not collect or transmit personal information, drawing information, layer names, or usage analytics. Processing occurs locally.
+Renamer processes drawing data locally and does not collect or transmit personal information, drawing information, object names, telemetry, or analytics.
 
-Privacy policy: https://github.com/OliversDev/Layer-Renamer-App-for-AutoCAD/blob/master/PRIVACY.md
+https://github.com/OliversDev/Renamer-App-for-AutoCAD/blob/master/PRIVACY.md
 
-## Submission artwork
+## Artwork
 
-- `Assets/LayerRenamerIcon-100.png` — transparent 100 × 100 icon
-- `Assets/LayerRenamerIcon-120.png` — transparent 120 × 120 Marketplace icon
-- `Assets/LayerRenamerIcon-1024.png` — transparent high-resolution icon
-- `Assets/LayerRenamerIcon.ico` — 16, 24, 32, 48, 64, 128, and 256 pixel Windows icon
-- `Assets/LayerRenamerIcon.svg` — editable application icon source
-- `Assets/LayerRenamerRibbon.svg` — simplified ribbon source
+- `Assets/RenamerIcon-100.png`
+- `Assets/RenamerIcon-120.png`
+- `Assets/RenamerIcon-1024.png`
+- `Assets/RenamerIcon.ico`
+- `Assets/RenamerIcon.svg`
+- `Assets/RenamerRibbon.svg`

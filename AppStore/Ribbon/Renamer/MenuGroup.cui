@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<MenuGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Name="RENAMER" DisplayName="Renamer">
+  <MacroGroup Name="RENAMER_COMMANDS">
+    <MenuMacro UID="MM_RENAMER_OPEN">
+      <Macro type="Any">
+        <Revision MajorVersion="25" MinorVersion="1" UserVersion="0" />
+        <ModifiedRev MajorVersion="25" MinorVersion="1" UserVersion="0" />
+        <Name>Renamer</Name>
+        <Command>^C^COW:Renamer</Command>
+        <HelpString>Open Renamer to preview and safely rename named drawing objects.</HelpString>
+        <SmallImage Name="Renamer16.png" />
+        <LargeImage Name="Renamer32.png" />
+        <ToolTip EnableHelp="true"
+                 HelpSource="Renamer.html#renamer" />
+      </Macro>
+    </MenuMacro>
+  </MacroGroup>
+</MenuGroup>
