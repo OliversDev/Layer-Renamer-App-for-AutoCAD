@@ -76,6 +76,10 @@ namespace AutoCADRenamer
             objectTable.Columns.Add("ObjectId", typeof(ObjectId));
             objectTable.Columns.Add("Name", typeof(string));
             objectTable.Columns.Add("Details", typeof(string));
+            objectTable.Columns.Add("Color", typeof(string));
+            objectTable.Columns.Add("Linetype", typeof(string));
+            objectTable.Columns.Add("IsFrozen", typeof(bool));
+            objectTable.Columns.Add("IsLocked", typeof(bool));
             dataGridViewObjects.DataSource = objectTable;
         }
 
@@ -90,6 +94,81 @@ namespace AutoCADRenamer
             dataGridViewObjects.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewObjects.ColumnHeadersDefaultCellStyle.Padding = new Padding(6, 0, 6, 0);
             dataGridViewObjects.DefaultCellStyle.Padding = new Padding(6, 0, 6, 0);
+
+            foreach (string name in new[] { "IsFrozen", "IsLocked" })
+            {
+                var column = dataGridViewObjects.Columns[name] as DataGridViewCheckBoxColumn;
+                if (column == null) continue;
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column.ReadOnly = true;
+                column.FlatStyle = FlatStyle.Flat;
+                column.ThreeState = false;
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                column.DefaultCellStyle.Padding = new Padding(0);
+                column.DefaultCellStyle.ForeColor = SystemColors.GrayText;
+            }
+
+            dataGridViewObjects.CellPainting += dataGridViewObjects_CellPainting;
+            ConfigureGridForActiveKind();
+        }
+
+        private void ConfigureGridForActiveKind()
+        {
+            bool layers = activeKind == ObjectKind.Layers;
+            DataGridViewColumn name = dataGridViewObjects.Columns["Name"];
+            DataGridViewColumn details = dataGridViewObjects.Columns["Details"];
+            DataGridViewColumn color = dataGridViewObjects.Columns["Color"];
+            DataGridViewColumn linetype = dataGridViewObjects.Columns["Linetype"];
+            DataGridViewColumn frozen = dataGridViewObjects.Columns["IsFrozen"];
+            DataGridViewColumn locked = dataGridViewObjects.Columns["IsLocked"];
+
+            name.HeaderText = layers ? "Layer Name" : ActiveDefinition.SingularName + " Name";
+            name.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+
+            details.Visible = !layers;
+            details.HeaderText = "Details";
+            details.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            details.Width = 390;
+
+            color.Visible = layers;
+            color.HeaderText = "Color";
+            color.Width = 90;
+
+            linetype.Visible = layers;
+            linetype.HeaderText = "Line Type";
+            linetype.Width = 110;
+
+            frozen.Visible = layers;
+            frozen.HeaderText = "Frozen";
+            frozen.Width = 64;
+
+            locked.Visible = layers;
+            locked.HeaderText = "Locked";
+            locked.Width = 64;
+
+            string[] order = layers
+                ? new[] { "Name", "Color", "Linetype", "IsFrozen", "IsLocked", "Details", "ObjectId" }
+                : new[] { "Name", "Details", "Color", "Linetype", "IsFrozen", "IsLocked", "ObjectId" };
+            for (int index = 0; index < order.Length; index++)
+                dataGridViewObjects.Columns[order[index]].DisplayIndex = index;
+        }
+
+        private void dataGridViewObjects_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (activeKind != ObjectKind.Layers || e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            string columnName = dataGridViewObjects.Columns[e.ColumnIndex].Name;
+            if (!string.Equals(columnName, "IsFrozen", StringComparison.Ordinal) &&
+                !string.Equals(columnName, "IsLocked", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            e.PaintBackground(e.CellBounds, true);
+            e.Paint(e.CellBounds, DataGridViewPaintParts.Border);
+            bool isChecked = e.FormattedValue != null && Convert.ToBoolean(e.FormattedValue);
+            RenamerTheme.DrawReadOnlyCheckBox(e.Graphics, e.CellBounds, isChecked);
+            e.Handled = true;
         }
 
         private ObjectDefinition ActiveDefinition { get { return ObjectDefinition.For(activeKind); } }
@@ -139,31 +218,40 @@ namespace AutoCADRenamer
 
         private void LoadLayers(Database database, Transaction transaction)
         {
-            LoadSymbolTable(
-                database.LayerTableId,
-                transaction,
-                record =>
+            var layers = (LayerTable)transaction.GetObject(database.LayerTableId, OpenMode.ForRead);
+            foreach (ObjectId id in layers)
+            {
+                var layer = (LayerTableRecord)transaction.GetObject(id, OpenMode.ForRead);
+                existingObjects[layer.Name] = id;
+                if (!IsStandardRecordRenameable(layer) ||
+                    string.Equals(layer.Name, "0", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(layer.Name, "Defpoints", StringComparison.OrdinalIgnoreCase))
                 {
-                    var layer = record as LayerTableRecord;
-                    return layer != null && IsStandardRecordRenameable(layer) &&
-                           !string.Equals(layer.Name, "0", StringComparison.OrdinalIgnoreCase) &&
-                           !string.Equals(layer.Name, "Defpoints", StringComparison.OrdinalIgnoreCase);
-                },
-                record =>
+                    continue;
+                }
+
+                string linetype = "ByLayer";
+                if (!layer.LinetypeObjectId.IsNull && layer.LinetypeObjectId.IsValid)
                 {
-                    var layer = (LayerTableRecord)record;
-                    string linetype = "ByLayer";
-                    if (!layer.LinetypeObjectId.IsNull && layer.LinetypeObjectId.IsValid)
+                    try
                     {
                         var typeRecord = transaction.GetObject(layer.LinetypeObjectId, OpenMode.ForRead) as LinetypeTableRecord;
                         if (typeRecord != null) linetype = typeRecord.Name;
                     }
-                    var states = new List<string>();
-                    if (layer.IsFrozen) states.Add("Frozen");
-                    if (layer.IsLocked) states.Add("Locked");
-                    string state = states.Count == 0 ? string.Empty : " | " + string.Join(", ", states);
-                    return "Color: " + layer.Color + " | Linetype: " + linetype + state;
-                });
+                    catch
+                    {
+                        // Retain the ByLayer fallback if a referenced record cannot be read.
+                    }
+                }
+
+                allObjects.Add(new NamedObjectInfo(
+                    id,
+                    layer.Name,
+                    layer.Color.ToString(),
+                    linetype,
+                    layer.IsFrozen,
+                    layer.IsLocked));
+            }
         }
 
         private void LoadBlocks(Database database, Transaction transaction)
@@ -230,7 +318,13 @@ namespace AutoCADRenamer
             {
                 string name = entry.Key;
                 existingObjects[name] = entry.Value;
-                if (string.IsNullOrWhiteSpace(name) || name.IndexOf('|') >= 0 || name.StartsWith("*", StringComparison.Ordinal)) continue;
+                if (string.IsNullOrWhiteSpace(name) ||
+                    string.Equals(name, "Standard", StringComparison.OrdinalIgnoreCase) ||
+                    name.IndexOf('|') >= 0 ||
+                    name.StartsWith("*", StringComparison.Ordinal))
+                {
+                    continue;
+                }
                 allObjects.Add(new NamedObjectInfo(entry.Value, name, string.Empty));
             }
         }
@@ -294,9 +388,18 @@ namespace AutoCADRenamer
             try
             {
                 objectTable.Rows.Clear();
-                foreach (NamedObjectInfo item in filtered) objectTable.Rows.Add(item.Id, item.Name, item.Details);
-                dataGridViewObjects.Columns["Name"].HeaderText = ActiveDefinition.SingularName + " Name";
-                dataGridViewObjects.Columns["Details"].Visible = allObjects.Any(item => !string.IsNullOrWhiteSpace(item.Details));
+                foreach (NamedObjectInfo item in filtered)
+                {
+                    objectTable.Rows.Add(
+                        item.Id,
+                        item.Name,
+                        item.Details,
+                        item.Color,
+                        item.Linetype,
+                        item.IsFrozen,
+                        item.IsLocked);
+                }
+                ConfigureGridForActiveKind();
                 dataGridViewObjects.ClearSelection();
                 foreach (DataGridViewRow row in dataGridViewObjects.Rows)
                 {
@@ -706,10 +809,33 @@ namespace AutoCADRenamer
                 Id = id;
                 Name = name;
                 Details = details ?? string.Empty;
+                Color = string.Empty;
+                Linetype = string.Empty;
+            }
+
+            public NamedObjectInfo(
+                ObjectId id,
+                string name,
+                string color,
+                string linetype,
+                bool isFrozen,
+                bool isLocked)
+            {
+                Id = id;
+                Name = name;
+                Details = string.Empty;
+                Color = color ?? string.Empty;
+                Linetype = linetype ?? string.Empty;
+                IsFrozen = isFrozen;
+                IsLocked = isLocked;
             }
             public ObjectId Id { get; private set; }
             public string Name { get; private set; }
             public string Details { get; private set; }
+            public string Color { get; private set; }
+            public string Linetype { get; private set; }
+            public bool IsFrozen { get; private set; }
+            public bool IsLocked { get; private set; }
         }
 
         private sealed class RenameItem

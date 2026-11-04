@@ -18,6 +18,7 @@ Renamer is an AutoCAD add-in for batch-renaming named drawing objects through a 
 - Filter by exact name or `*` wildcard patterns while preserving selection.
 - Reject empty, invalid, over-length, duplicate, and conflicting generated names.
 - Exclude protected, anonymous, layout, xref-dependent, and other non-renamable AutoCAD records.
+- Show the original detailed layer columns for colour, linetype, frozen state, and locked state while other tabs use Name and Details.
 - Build one editable script containing commands from multiple object categories.
 - Warn when the same source is renamed more than once or same-category targets collide.
 - Copy, save, clear, manually edit, or run the script in the active drawing.
@@ -40,6 +41,8 @@ The Autodesk Design and Make Marketplace installer registers the application aut
 5. Review or edit the combined script, then copy, save, or run it. Lines beginning with `;` are comments.
 
 Renaming uses AutoCAD's standard `-RENAME` command and remains available to AutoCAD's normal Undo workflow while the drawing is open. Manually entered script lines run as written and should be reviewed carefully.
+
+The protected Standard table style is intentionally excluded because AutoCAD does not permit it to be renamed.
 
 ## Development and packaging
 

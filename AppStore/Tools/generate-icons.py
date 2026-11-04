@@ -41,12 +41,26 @@ def render(size: int) -> Image.Image:
     return image.resize((size, size), Image.Resampling.LANCZOS)
 
 
+def render_ribbon(size: int) -> Image.Image:
+    source = render(256)
+    bounds = source.getchannel("A").getbbox()
+    artwork = source.crop(bounds)
+    maximum = size - 2
+    ratio = min(maximum / artwork.width, maximum / artwork.height)
+    width = max(1, round(artwork.width * ratio))
+    height = max(1, round(artwork.height * ratio))
+    artwork = artwork.resize((width, height), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    canvas.alpha_composite(artwork, ((size - width) // 2, (size - height) // 2))
+    return canvas
+
+
 ASSETS.mkdir(parents=True, exist_ok=True)
 RIBBON.mkdir(parents=True, exist_ok=True)
 for size in (1024, 120, 100):
     render(size).save(ASSETS / f"RenamerIcon-{size}.png")
-render(32).save(RIBBON / "Renamer32.png")
-render(16).save(RIBBON / "Renamer16.png")
+render_ribbon(32).save(RIBBON / "Renamer32.png")
+render_ribbon(16).save(RIBBON / "Renamer16.png")
 
 icon = render(256)
 for target in (ASSETS / "RenamerIcon.ico", PROJECT / "RenamerIcon.ico"):

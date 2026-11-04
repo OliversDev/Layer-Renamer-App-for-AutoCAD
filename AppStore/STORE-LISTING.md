@@ -32,7 +32,7 @@ Include the AutoCAD version, Renamer version, reproducible steps, and any displa
 
 ## Compatibility and limitations
 
-Renamer supports 64-bit AutoCAD 2026 and AutoCAD 2027. AutoCAD may reject a rename based on drawing state or dependencies. Anonymous blocks, layout blocks, xref-dependent records, layer `0`, `Defpoints`, and reserved linetypes are excluded. Maintain current drawing backups and review scripts before production use.
+Renamer supports 64-bit AutoCAD 2026 and AutoCAD 2027. AutoCAD may reject a rename based on drawing state or dependencies. Anonymous blocks, layout blocks, xref-dependent records, layer `0`, `Defpoints`, reserved linetypes, and the protected Standard table style are excluded. Maintain current drawing backups and review scripts before production use.
 
 ## Commands
 
