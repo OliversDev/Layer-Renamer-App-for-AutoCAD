@@ -116,7 +116,9 @@ namespace AutoCADRenamer
             ConfigureGridForActiveKind();
         }
 
-        private void dataGridViewObjects_Layout(object sender, LayoutEventArgs e)
+        private void dataGridViewObjects_Layout(
+            object sender,
+            System.Windows.Forms.LayoutEventArgs e)
         {
             if (dataGridScrollCorner == null) return;
 
