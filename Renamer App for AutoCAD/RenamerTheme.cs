@@ -15,6 +15,10 @@ namespace AutoCADRenamer
         private const uint WmThemeChanged = 0x031A;
 
         private static readonly Color Accent = Color.FromArgb(0, 120, 212);
+        private static readonly Font CategoryTabFont =
+            new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+        private static readonly Font SelectedCategoryTabFont =
+            new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
 
         public static void Apply(
             Form form,
@@ -107,10 +111,6 @@ namespace AutoCADRenamer
                 else if (control is DataGridView)
                 {
                     ApplyDataGridViewTheme((DataGridView)control, isDark, palette);
-                }
-                else if (control is TabControl)
-                {
-                    ApplyTabControlTheme((TabControl)control, isDark, palette);
                 }
                 else if (control is ScrollBar)
                 {
@@ -261,72 +261,18 @@ namespace AutoCADRenamer
             }
         }
 
-        private static void ApplyTabControlTheme(
-            TabControl tabs,
-            bool isDark,
-            ThemePalette palette)
+        public static void StyleCategoryTab(Button button, bool selected)
         {
-            tabs.DrawMode = TabDrawMode.OwnerDrawFixed;
-            tabs.SizeMode = TabSizeMode.Normal;
-            tabs.BackColor = palette.Background;
-            tabs.ForeColor = palette.Text;
-            tabs.DrawItem -= TabControl_DrawItem;
-            tabs.DrawItem += TabControl_DrawItem;
-            tabs.SelectedIndexChanged -= TabControl_SelectedIndexChanged;
-            tabs.SelectedIndexChanged += TabControl_SelectedIndexChanged;
-
-            foreach (TabPage page in tabs.TabPages)
-            {
-                page.UseVisualStyleBackColor = false;
-                page.BackColor = palette.Background;
-                page.ForeColor = palette.Text;
-            }
-
-            ApplyNativeControlTheme(tabs, isDark);
-            tabs.Invalidate();
-        }
-
-        private static void TabControl_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var tabs = sender as TabControl;
-            if (tabs != null) tabs.Invalidate();
-        }
-
-        private static void TabControl_DrawItem(object sender, DrawItemEventArgs e)
-        {
-            var tabs = sender as TabControl;
-            if (tabs == null || e.Index < 0 || e.Index >= tabs.TabPages.Count) return;
-
             ThemePalette palette = CreatePalette(IsWindowsDarkMode());
-            bool selected = e.Index == tabs.SelectedIndex;
-            Rectangle bounds = e.Bounds;
-            bounds.Inflate(-1, -1);
-
-            Color fill = selected ? palette.Surface : palette.AlternateSurface;
-            using (var brush = new SolidBrush(fill))
-                e.Graphics.FillRectangle(brush, bounds);
-
-            using (var border = new Pen(selected ? Accent : palette.Border, selected ? 2F : 1F))
-            {
-                Rectangle outline = bounds;
-                outline.Width -= 1;
-                outline.Height -= 1;
-                e.Graphics.DrawRectangle(border, outline);
-            }
-
-            FontStyle fontStyle = selected ? FontStyle.Bold : FontStyle.Regular;
-            using (var font = new Font(tabs.Font, fontStyle))
-            {
-                TextRenderer.DrawText(
-                    e.Graphics,
-                    tabs.TabPages[e.Index].Text,
-                    font,
-                    bounds,
-                    palette.Text,
-                    TextFormatFlags.HorizontalCenter |
-                    TextFormatFlags.VerticalCenter |
-                    TextFormatFlags.EndEllipsis);
-            }
+            button.UseVisualStyleBackColor = false;
+            button.FlatStyle = FlatStyle.Flat;
+            button.BackColor = selected ? palette.Surface : palette.AlternateSurface;
+            button.ForeColor = palette.Text;
+            button.Font = selected ? SelectedCategoryTabFont : CategoryTabFont;
+            button.FlatAppearance.BorderColor = selected ? Accent : palette.Border;
+            button.FlatAppearance.BorderSize = selected ? 2 : 1;
+            button.FlatAppearance.MouseOverBackColor = palette.Surface;
+            button.FlatAppearance.MouseDownBackColor = palette.Surface;
         }
 
         public static void DrawReadOnlyCheckBox(

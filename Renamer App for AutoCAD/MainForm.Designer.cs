@@ -7,7 +7,7 @@ namespace AutoCADRenamer
     {
         private System.ComponentModel.IContainer components;
         private DataGridView dataGridViewObjects;
-        private TabControl tabObjects;
+        private FlowLayoutPanel categoryTabs;
         private TextBox txtFilter;
         private TextBox txtPrefix;
         private TextBox txtSuffix;
@@ -151,8 +151,10 @@ namespace AutoCADRenamer
                 Dock = DockStyle.Fill,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
+                AllowUserToResizeColumns = true,
                 AllowUserToResizeRows = false,
                 AutoGenerateColumns = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
                 MultiSelect = true,
                 ReadOnly = true,
                 RowHeadersVisible = false,
@@ -168,24 +170,55 @@ namespace AutoCADRenamer
             };
             dataGridViewObjects.SelectionChanged += dataGridViewObjects_SelectionChanged;
 
-            tabObjects = new TabControl
+            categoryTabs = new FlowLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                AutoSize = false,
+                Height = 34,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
                 Margin = new Padding(0),
-                Padding = new Point(14, 5)
+                Padding = new Padding(0, 0, 0, 4)
             };
-            foreach (string category in new[]
+
+            string[] categoryNames =
             {
                 "Layers", "Blocks", "Dimension Styles", "Linetypes", "Table Styles", "Text Styles"
-            })
+            };
+            int[] categoryWidths = { 72, 70, 125, 85, 95, 90 };
+            for (int index = 0; index < categoryNames.Length; index++)
             {
-                tabObjects.TabPages.Add(new TabPage(category) { Padding = new Padding(3) });
+                var categoryButton = new Button
+                {
+                    Text = categoryNames[index],
+                    Tag = index,
+                    Size = new Size(categoryWidths[index], 30),
+                    Margin = new Padding(0, 0, 4, 0),
+                    FlatStyle = FlatStyle.Flat,
+                    UseVisualStyleBackColor = false,
+                    Cursor = Cursors.Hand,
+                    TabStop = false
+                };
+                categoryButton.Click += categoryTab_Click;
+                categoryTabs.Controls.Add(categoryButton);
             }
-            tabObjects.TabPages[0].Controls.Add(dataGridViewObjects);
-            tabObjects.SelectedIndexChanged += tabObjects_SelectedIndexChanged;
+
+            var browserLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+            browserLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            browserLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+            browserLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            browserLayout.Controls.Add(categoryTabs, 0, 0);
+            browserLayout.Controls.Add(dataGridViewObjects, 0, 1);
 
             objectsLayout.Controls.Add(search, 0, 0);
-            objectsLayout.Controls.Add(tabObjects, 0, 1);
+            objectsLayout.Controls.Add(browserLayout, 0, 1);
             objects.Controls.Add(objectsLayout);
 
             var options = new GroupBox

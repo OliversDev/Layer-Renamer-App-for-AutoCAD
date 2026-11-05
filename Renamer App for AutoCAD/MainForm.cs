@@ -42,6 +42,7 @@ namespace AutoCADRenamer
             InitializeObjectTable();
             RenamerTheme.Apply(this, btnRename, footerPanel, Logo, GitHub, LinkedIn);
             ConfigureGrid();
+            UpdateCategoryTabSelection();
             LoadObjects();
             UpdateScriptDisplay();
         }
@@ -86,8 +87,10 @@ namespace AutoCADRenamer
         private void ConfigureGrid()
         {
             dataGridViewObjects.Columns["ObjectId"].Visible = false;
-            dataGridViewObjects.Columns["Name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewObjects.Columns["Details"].Width = 390;
+            dataGridViewObjects.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+            dataGridViewObjects.AllowUserToResizeColumns = true;
+            dataGridViewObjects.Columns["Name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            dataGridViewObjects.Columns["Details"].Width = 560;
             dataGridViewObjects.Columns["Details"].HeaderText = "Details";
             dataGridViewObjects.ColumnHeadersDefaultCellStyle.Font =
                 new System.Drawing.Font(dataGridViewObjects.Font, System.Drawing.FontStyle.Bold);
@@ -123,28 +126,41 @@ namespace AutoCADRenamer
             DataGridViewColumn locked = dataGridViewObjects.Columns["IsLocked"];
 
             name.HeaderText = layers ? "Layer Name" : ActiveDefinition.SingularName + " Name";
-            name.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            name.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            name.Width = layers ? 520 : 350;
+            name.MinimumWidth = 180;
+            name.Resizable = DataGridViewTriState.True;
 
             details.Visible = !layers;
             details.HeaderText = "Details";
             details.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-            details.Width = 390;
+            details.Width = 560;
+            details.MinimumWidth = 250;
+            details.Resizable = DataGridViewTriState.True;
 
             color.Visible = layers;
             color.HeaderText = "Color";
             color.Width = 90;
+            color.MinimumWidth = 70;
+            color.Resizable = DataGridViewTriState.True;
 
             linetype.Visible = layers;
             linetype.HeaderText = "Line Type";
             linetype.Width = 110;
+            linetype.MinimumWidth = 90;
+            linetype.Resizable = DataGridViewTriState.True;
 
             frozen.Visible = layers;
             frozen.HeaderText = "Frozen";
             frozen.Width = 64;
+            frozen.MinimumWidth = 60;
+            frozen.Resizable = DataGridViewTriState.True;
 
             locked.Visible = layers;
             locked.HeaderText = "Locked";
             locked.Width = 64;
+            locked.MinimumWidth = 60;
+            locked.Resizable = DataGridViewTriState.True;
 
             string[] order = layers
                 ? new[] { "Name", "Color", "Linetype", "IsFrozen", "IsLocked", "Details", "ObjectId" }
@@ -334,22 +350,39 @@ namespace AutoCADRenamer
             return record != null && !string.IsNullOrWhiteSpace(record.Name) && !record.IsDependent && record.Name.IndexOf('|') < 0;
         }
 
-        private void tabObjects_SelectedIndexChanged(object sender, EventArgs e)
+        private void categoryTab_Click(object sender, EventArgs e)
         {
-            if (switchingCategory || tabObjects.SelectedIndex < 0) return;
+            var button = sender as Button;
+            if (switchingCategory || button == null || button.Tag == null) return;
+
+            ObjectKind nextKind = (ObjectKind)Convert.ToInt32(button.Tag);
+            if (nextKind == activeKind) return;
+
             SaveSelectedObjects();
             filters[activeKind] = txtFilter.Text;
-            activeKind = (ObjectKind)tabObjects.SelectedIndex;
+            activeKind = nextKind;
 
             switchingCategory = true;
             try
             {
                 txtFilter.Text = filters[activeKind];
-                tabObjects.SelectedTab.Controls.Add(dataGridViewObjects);
-                dataGridViewObjects.Dock = DockStyle.Fill;
+                UpdateCategoryTabSelection();
                 LoadObjects(false);
             }
             finally { switchingCategory = false; }
+        }
+
+        private void UpdateCategoryTabSelection()
+        {
+            if (categoryTabs == null) return;
+
+            foreach (Control control in categoryTabs.Controls)
+            {
+                var button = control as Button;
+                if (button == null || button.Tag == null) continue;
+                bool selected = Convert.ToInt32(button.Tag) == (int)activeKind;
+                RenamerTheme.StyleCategoryTab(button, selected);
+            }
         }
 
         private void dataGridViewObjects_SelectionChanged(object sender, EventArgs e)
