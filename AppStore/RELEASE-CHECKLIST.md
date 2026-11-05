@@ -15,6 +15,8 @@
 - Test all tabs: Layers, Blocks, Dimension Styles, Linetypes, Table Styles, and Text Styles.
 - Confirm the category selector has no light native-tab frame in either Windows theme and the active category has the accent outline.
 - Drag each visible grid-column divider, narrow the window, and confirm the horizontal scrollbar exposes the complete grid.
+- With both grid scrollbars visible, confirm their lower-right intersection matches the application theme.
+- Sort Layers by Frozen and Locked in both ascending and descending order.
 - Test exact and `*` filters, independent tab selections, prefix, suffix, find/replace, exact single-object naming, mixed-category staging, manual edits, comments, copy, save, clear, execution, and Undo.
 - Verify same-category collision warnings do not incorrectly flag identical names in different categories.
 - Verify layer `0`, Defpoints, reserved linetypes, the Standard table style, layout/anonymous blocks, and dependent xref records are excluded.

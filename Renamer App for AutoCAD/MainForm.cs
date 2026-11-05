@@ -41,6 +41,7 @@ namespace AutoCADRenamer
             ApplyApplicationIcon();
             InitializeObjectTable();
             RenamerTheme.Apply(this, btnRename, footerPanel, Logo, GitHub, LinkedIn);
+            RenamerTheme.StyleScrollBarCorner(dataGridScrollCorner);
             ConfigureGrid();
             UpdateCategoryTabSelection();
             LoadObjects();
@@ -102,7 +103,7 @@ namespace AutoCADRenamer
             {
                 var column = dataGridViewObjects.Columns[name] as DataGridViewCheckBoxColumn;
                 if (column == null) continue;
-                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column.SortMode = DataGridViewColumnSortMode.Automatic;
                 column.ReadOnly = true;
                 column.FlatStyle = FlatStyle.Flat;
                 column.ThreeState = false;
@@ -113,6 +114,40 @@ namespace AutoCADRenamer
 
             dataGridViewObjects.CellPainting += dataGridViewObjects_CellPainting;
             ConfigureGridForActiveKind();
+        }
+
+        private void dataGridViewObjects_Layout(object sender, LayoutEventArgs e)
+        {
+            if (dataGridScrollCorner == null) return;
+
+            HScrollBar horizontal = null;
+            VScrollBar vertical = null;
+            foreach (Control control in dataGridViewObjects.Controls)
+            {
+                if (control is HScrollBar) horizontal = (HScrollBar)control;
+                else if (control is VScrollBar) vertical = (VScrollBar)control;
+            }
+
+            bool showCorner = horizontal != null && horizontal.Visible &&
+                              vertical != null && vertical.Visible;
+            if (!showCorner)
+            {
+                dataGridScrollCorner.Visible = false;
+                return;
+            }
+
+            var cornerBounds = new Rectangle(
+                vertical.Left,
+                horizontal.Top,
+                vertical.Width,
+                horizontal.Height);
+            if (dataGridScrollCorner.Bounds != cornerBounds)
+                dataGridScrollCorner.Bounds = cornerBounds;
+            if (!dataGridScrollCorner.Visible)
+            {
+                dataGridScrollCorner.Visible = true;
+                dataGridScrollCorner.BringToFront();
+            }
         }
 
         private void ConfigureGridForActiveKind()

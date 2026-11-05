@@ -275,6 +275,12 @@ namespace AutoCADRenamer
             button.FlatAppearance.MouseDownBackColor = palette.Surface;
         }
 
+        public static void StyleScrollBarCorner(Panel corner)
+        {
+            if (corner == null) return;
+            corner.BackColor = CreatePalette(IsWindowsDarkMode()).Background;
+        }
+
         public static void DrawReadOnlyCheckBox(
             Graphics graphics,
             Rectangle cellBounds,

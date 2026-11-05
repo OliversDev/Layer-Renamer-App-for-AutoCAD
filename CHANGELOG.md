@@ -14,5 +14,7 @@
 - Restored the detailed Layers grid columns for colour, linetype, frozen state, and locked state.
 - Replaced the native category tabs with modern flat, theme-aware category buttons and removed the native white tab frame in dark mode.
 - Enabled manual grid-column resizing and horizontal scrolling for wide column layouts.
+- Joined the category controls into a larger tab-style strip and increased spacing below the wildcard hint.
+- Themed the grid scrollbar intersection and enabled sorting on the Frozen and Locked columns.
 - Excluded the protected Standard table style from the Table Styles tab.
 - Enlarged the ribbon artwork to match the visual scale of Batch Scripter.

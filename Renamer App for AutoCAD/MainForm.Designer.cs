@@ -7,6 +7,7 @@ namespace AutoCADRenamer
     {
         private System.ComponentModel.IContainer components;
         private DataGridView dataGridViewObjects;
+        private Panel dataGridScrollCorner;
         private FlowLayoutPanel categoryTabs;
         private TextBox txtFilter;
         private TextBox txtPrefix;
@@ -78,10 +79,10 @@ namespace AutoCADRenamer
                 AutoSize = true,
                 ColumnCount = 5,
                 RowCount = 2,
-                Margin = new Padding(0, 4, 0, 8)
+                Margin = new Padding(0, 4, 0, 12)
             };
             search.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-            search.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
+            search.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
             search.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             search.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             search.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -141,7 +142,7 @@ namespace AutoCADRenamer
                 Text = "Exact by default. Use * as a wildcard.",
                 AutoSize = true,
                 Anchor = AnchorStyles.Left,
-                Margin = new Padding(0, 2, 0, 0)
+                Margin = new Padding(0, 2, 0, 4)
             };
             search.Controls.Add(filterHint, 1, 1);
             search.SetColumnSpan(filterHint, 4);
@@ -169,31 +170,41 @@ namespace AutoCADRenamer
                 RowTemplate = { Height = 24 }
             };
             dataGridViewObjects.SelectionChanged += dataGridViewObjects_SelectionChanged;
+            dataGridViewObjects.Layout += dataGridViewObjects_Layout;
+
+            dataGridScrollCorner = new Panel
+            {
+                Name = "RenamerScrollBarCorner",
+                Visible = false,
+                TabStop = false,
+                Margin = new Padding(0)
+            };
+            dataGridViewObjects.Controls.Add(dataGridScrollCorner);
 
             categoryTabs = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
                 AutoSize = false,
-                Height = 34,
+                Height = 38,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 Margin = new Padding(0),
-                Padding = new Padding(0, 0, 0, 4)
+                Padding = new Padding(0, 4, 0, 0)
             };
 
             string[] categoryNames =
             {
                 "Layers", "Blocks", "Dimension Styles", "Linetypes", "Table Styles", "Text Styles"
             };
-            int[] categoryWidths = { 72, 70, 125, 85, 95, 90 };
+            int[] categoryWidths = { 82, 78, 140, 92, 106, 100 };
             for (int index = 0; index < categoryNames.Length; index++)
             {
                 var categoryButton = new Button
                 {
                     Text = categoryNames[index],
                     Tag = index,
-                    Size = new Size(categoryWidths[index], 30),
-                    Margin = new Padding(0, 0, 4, 0),
+                    Size = new Size(categoryWidths[index], 34),
+                    Margin = new Padding(0),
                     FlatStyle = FlatStyle.Flat,
                     UseVisualStyleBackColor = false,
                     Cursor = Cursors.Hand,
@@ -212,7 +223,7 @@ namespace AutoCADRenamer
                 Padding = new Padding(0)
             };
             browserLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            browserLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+            browserLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
             browserLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             browserLayout.Controls.Add(categoryTabs, 0, 0);
             browserLayout.Controls.Add(dataGridViewObjects, 0, 1);
