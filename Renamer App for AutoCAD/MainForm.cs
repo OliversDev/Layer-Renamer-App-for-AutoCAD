@@ -34,6 +34,7 @@ namespace AutoCADRenamer
         private ObjectKind activeKind = ObjectKind.Layers;
         private bool restoringSelection;
         private bool switchingCategory;
+        private bool scrollBarCornerUpdatePending;
 
         public RenamerForm()
         {
@@ -61,6 +62,12 @@ namespace AutoCADRenamer
             {
                 // Focus recovery must never prevent the form from closing.
             }
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            QueueScrollBarCornerUpdate();
         }
 
         private void ApplyApplicationIcon()
@@ -120,7 +127,62 @@ namespace AutoCADRenamer
             object sender,
             System.Windows.Forms.LayoutEventArgs e)
         {
-            if (dataGridScrollCorner == null) return;
+            QueueScrollBarCornerUpdate();
+        }
+
+        private void dataGridViewObjects_Scroll(
+            object sender,
+            System.Windows.Forms.ScrollEventArgs e)
+        {
+            QueueScrollBarCornerUpdate();
+        }
+
+        private void dataGridViewObjects_SizeChanged(object sender, EventArgs e)
+        {
+            QueueScrollBarCornerUpdate();
+        }
+
+        private void dataGridViewObjects_DataBindingComplete(
+            object sender,
+            DataGridViewBindingCompleteEventArgs e)
+        {
+            QueueScrollBarCornerUpdate();
+        }
+
+        private void QueueScrollBarCornerUpdate()
+        {
+            if (scrollBarCornerUpdatePending ||
+                dataGridViewObjects == null ||
+                dataGridViewObjects.IsDisposed ||
+                !dataGridViewObjects.IsHandleCreated)
+            {
+                return;
+            }
+
+            scrollBarCornerUpdatePending = true;
+            try
+            {
+                dataGridViewObjects.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                {
+                    scrollBarCornerUpdatePending = false;
+                    UpdateScrollBarCorner();
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                scrollBarCornerUpdatePending = false;
+            }
+        }
+
+        private void UpdateScrollBarCorner()
+        {
+            if (dataGridScrollCorner == null ||
+                dataGridScrollCorner.IsDisposed ||
+                dataGridViewObjects == null ||
+                dataGridViewObjects.IsDisposed)
+            {
+                return;
+            }
 
             HScrollBar horizontal = null;
             VScrollBar vertical = null;
@@ -145,11 +207,10 @@ namespace AutoCADRenamer
                 horizontal.Height);
             if (dataGridScrollCorner.Bounds != cornerBounds)
                 dataGridScrollCorner.Bounds = cornerBounds;
-            if (!dataGridScrollCorner.Visible)
-            {
-                dataGridScrollCorner.Visible = true;
-                dataGridScrollCorner.BringToFront();
-            }
+            RenamerTheme.StyleScrollBarCorner(dataGridScrollCorner);
+            dataGridScrollCorner.Visible = true;
+            dataGridScrollCorner.BringToFront();
+            dataGridScrollCorner.Refresh();
         }
 
         private void ConfigureGridForActiveKind()
@@ -479,6 +540,7 @@ namespace AutoCADRenamer
             }
             finally { restoringSelection = false; }
             UpdateSelectionLabel();
+            QueueScrollBarCornerUpdate();
         }
 
         private static bool MatchesFilter(string name, string filter)

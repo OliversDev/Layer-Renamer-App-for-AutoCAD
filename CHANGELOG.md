@@ -16,5 +16,6 @@
 - Enabled manual grid-column resizing and horizontal scrolling for wide column layouts.
 - Joined the category controls into a larger tab-style strip and increased spacing below the wildcard hint.
 - Themed the grid scrollbar intersection and enabled sorting on the Frozen and Locked columns.
+- Reapplied the themed scrollbar corner after native grid layout, scrolling, resizing, and data binding so WinForms cannot repaint it white.
 - Excluded the protected Standard table style from the Table Styles tab.
 - Enlarged the ribbon artwork to match the visual scale of Batch Scripter.

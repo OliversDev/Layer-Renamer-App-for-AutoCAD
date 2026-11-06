@@ -171,11 +171,15 @@ namespace AutoCADRenamer
             };
             dataGridViewObjects.SelectionChanged += dataGridViewObjects_SelectionChanged;
             dataGridViewObjects.Layout += dataGridViewObjects_Layout;
+            dataGridViewObjects.Scroll += dataGridViewObjects_Scroll;
+            dataGridViewObjects.SizeChanged += dataGridViewObjects_SizeChanged;
+            dataGridViewObjects.DataBindingComplete += dataGridViewObjects_DataBindingComplete;
 
             dataGridScrollCorner = new Panel
             {
                 Name = "RenamerScrollBarCorner",
                 Visible = false,
+                Enabled = false,
                 TabStop = false,
                 Margin = new Padding(0)
             };
